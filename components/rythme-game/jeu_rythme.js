@@ -15,7 +15,7 @@ const HIT_WINDOW    = 450;
 const MISS_LIMIT    = 3;
 const HITS_PER_LIFE = 8;
 const GAME_DURATION = 120;
-const SECRET_LETTER = 'I';
+const SECRET_LETTER = 'B';
 const GRACE_MS      = 1000;
 
 const TRAVEL_DISTANCE = RECEPTOR_Y + ARROW_SIZE;
@@ -225,7 +225,7 @@ function generateChart() {
 const CHART = generateChart();
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function RhythmGame() {
+export default function RhythmGame({ onWin }) {
   const [gameState,  setGameState]  = useState('idle');
   const [score,      setScore]      = useState(0);
   const [misses,     setMisses]     = useState(0);
@@ -415,6 +415,10 @@ export default function RhythmGame() {
       window.removeEventListener('keyup',   onKeyUp);
     };
   }, [gameState, showFeedback]);
+
+  useEffect(() => {
+    if (gameState === 'win' && onWin) onWin();
+  }, [gameState, onWin]);
 
   useEffect(() => {
     return () => {

@@ -22,6 +22,7 @@ const GAMES = [
     dimGlow: 'rgba(0,229,255,0.08)',
     icon: '♩',
     iconBg: 'radial-gradient(circle at 40% 35%, #0a2a30 0%, #050d10 100%)',
+    letter: 'B',
   },
   {
     id: 'glitch',
@@ -35,6 +36,7 @@ const GAMES = [
     dimGlow: 'rgba(255,0,64,0.08)',
     icon: '⊗',
     iconBg: 'radial-gradient(circle at 40% 35%, #2a0010 0%, #100005 100%)',
+    letter: 'U',
   },
   {
     id: 'memory',
@@ -48,6 +50,7 @@ const GAMES = [
     dimGlow: 'rgba(191,0,255,0.08)',
     icon: '◈',
     iconBg: 'radial-gradient(circle at 40% 35%, #1a0028 0%, #080010 100%)',
+    letter: 'Z',
   },
   {
     id: 'quest',
@@ -61,6 +64,7 @@ const GAMES = [
     dimGlow: 'rgba(255,208,0,0.08)',
     icon: '⚔',
     iconBg: 'radial-gradient(circle at 40% 35%, #2a2000 0%, #100d00 100%)',
+    letter: 'U',
   },
   {
     id: 'mirror',
@@ -74,6 +78,7 @@ const GAMES = [
     dimGlow: 'rgba(57,255,20,0.08)',
     icon: '⬡',
     iconBg: 'radial-gradient(circle at 40% 35%, #0a2000 0%, #040d00 100%)',
+    letter: 'K',
   },
   {
     id: 'tune',
@@ -87,8 +92,128 @@ const GAMES = [
     dimGlow: 'rgba(250,204,21,0.08)',
     icon: '♪',
     iconBg: 'radial-gradient(circle at 40% 35%, #2a2200 0%, #100e00 100%)',
+    letter: 'I',
   },
 ];
+
+/* ─── Mailbox Panel ─── */
+function MailboxPanel({ unlockedLevel }) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div
+      className="fixed top-1/2 right-0 z-50 flex flex-col items-end"
+      style={{ transform: 'translateY(-50%)' }}
+    >
+      {/* Toggle tab */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 px-3 py-4 font-mono text-[9px] tracking-[0.25em] uppercase transition-all"
+        style={{
+          writingMode: 'vertical-rl',
+          textOrientation: 'mixed',
+          background: 'rgba(8,8,20,0.95)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRight: 'none',
+          borderRadius: '8px 0 0 8px',
+          color: '#444',
+          cursor: 'pointer',
+          letterSpacing: '0.2em',
+        }}
+        onMouseEnter={e => e.currentTarget.style.color = '#aaa'}
+        onMouseLeave={e => e.currentTarget.style.color = '#444'}
+      >
+        {open ? '▶' : '◀'} &nbsp; boîte aux lettres
+      </button>
+
+      {/* Panel */}
+      {open && (
+        <div
+          className="absolute right-0 flex flex-col gap-2 p-4 rounded-l-2xl"
+          style={{
+            top: '50%',
+            transform: 'translate(0, -50%)',
+            marginRight: '28px',
+            background: 'rgba(8,8,20,0.95)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            backdropFilter: 'blur(12px)',
+            minWidth: '90px',
+          }}
+        >
+          {/* Title */}
+          <p className="font-mono text-[8px] tracking-[0.3em] uppercase text-center mb-1" style={{ color: '#333' }}>
+            ✉ lettres
+          </p>
+
+          {/* One slot per game */}
+          {GAMES.map((game, i) => {
+            const completed = i < unlockedLevel - 1; // jeu terminé → lettre visible
+            return (
+              <div
+                key={game.id}
+                className="flex flex-col items-center gap-1"
+              >
+                {/* Number */}
+                <span className="font-mono text-[7px]" style={{ color: completed ? game.accent + '80' : '#222' }}>
+                  {game.number}
+                </span>
+                {/* Letter box */}
+                <div
+                  className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-500"
+                  style={{
+                    background: completed ? `${game.accent}12` : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${completed ? game.accent + '50' : 'rgba(255,255,255,0.05)'}`,
+                    boxShadow: completed ? `0 0 10px ${game.dimGlow}` : 'none',
+                  }}
+                >
+                  {completed ? (
+                    <span
+                      style={{
+                        fontFamily: "'Bebas Neue', sans-serif",
+                        fontSize: '1.4rem',
+                        color: game.accent,
+                        textShadow: `0 0 10px ${game.glow}`,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {game.letter}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.65rem', opacity: 0.15 }}>?</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Divider */}
+          <div className="h-px w-full my-1" style={{ background: 'rgba(255,255,255,0.05)' }} />
+
+          {/* Assembled word preview */}
+          <div className="flex flex-col items-center gap-0.5">
+            {GAMES.map((game, i) => {
+              const completed = i < unlockedLevel - 1;
+              return (
+                <span
+                  key={game.id}
+                  style={{
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontSize: '0.85rem',
+                    color: completed ? game.accent : '#1a1a2e',
+                    lineHeight: 1.1,
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  {completed ? game.letter : '·'}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ─── Animated grid bg (canvas) ─── */
 function GridCanvas() {
@@ -341,6 +466,164 @@ function GameCard({ game, index, isUnlocked, isNextToUnlock, previousGame, onCli
   );
 }
 
+/* ─── Secret Code Section ─── */
+const FINAL_CODE = 'BUZUKI';
+
+function SecretCodeSection() {
+  const [open, setOpen] = useState(false);
+  const [letters, setLetters] = useState(Array(GAMES.length).fill(''));
+  const [result, setResult] = useState(null); // null | 'correct' | 'wrong'
+
+  const allFilled = letters.every(l => l.trim() !== '');
+  const assembled = letters.join('');
+
+  function handleChange(i, val) {
+    const copy = [...letters];
+    copy[i] = val.toUpperCase().slice(-1);
+    setLetters(copy);
+    setResult(null);
+  }
+
+  function validate() {
+    setResult(assembled.toUpperCase() === FINAL_CODE.toUpperCase() ? 'correct' : 'wrong');
+  }
+
+  return (
+    <div className="mt-16 w-full flex flex-col items-center gap-5" style={{ animation: 'scanFade 0.6s ease both 1s', opacity: 0 }}>
+
+      {/* Toggle button */}
+      <button
+        onClick={() => { setOpen(o => !o); setResult(null); }}
+        className="flex items-center gap-3 font-mono text-[11px] tracking-[0.35em] uppercase px-6 py-3 rounded border transition-all"
+        style={{
+          color: open ? '#fff' : '#555',
+          borderColor: open ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
+          background: open ? 'rgba(255,255,255,0.04)' : 'transparent',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#fff'; }}
+        onMouseLeave={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#555'; } }}
+      >
+        <span style={{ fontSize: '0.65rem' }}>{open ? '▲' : '▼'}</span>
+        {open ? 'MASQUER LE CODE SECRET' : 'DÉCHIFFRER LE CODE SECRET'}
+      </button>
+
+      {/* Panel */}
+      {open && (
+        <div
+          className="w-full max-w-2xl rounded-2xl p-6 flex flex-col gap-5"
+          style={{ background: 'rgba(8,8,20,0.9)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}
+        >
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            <span className="font-mono text-[10px] tracking-[0.4em] uppercase" style={{ color: '#444' }}>
+              Fragments collectés
+            </span>
+            <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          </div>
+
+          {/* Letter inputs */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {GAMES.map((game, i) => (
+              <div key={game.id} className="flex flex-col items-center gap-2">
+                {/* Game label */}
+                <span
+                  className="font-mono text-[8px] tracking-[0.2em] uppercase text-center leading-tight"
+                  style={{ color: game.accent + 'aa' }}
+                >
+                  {game.number}
+                </span>
+                {/* Input */}
+                <input
+                  type="text"
+                  maxLength={1}
+                  value={letters[i]}
+                  onChange={e => handleChange(i, e.target.value)}
+                  placeholder="?"
+                  className="w-12 h-14 text-center text-2xl font-bold rounded-lg outline-none transition-all duration-200 uppercase"
+                  style={{
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    background: letters[i] ? `${game.accent}12` : 'rgba(12,12,24,0.8)',
+                    border: `1px solid ${letters[i] ? game.accent + '60' : 'rgba(255,255,255,0.06)'}`,
+                    color: letters[i] ? game.accent : '#333',
+                    boxShadow: letters[i] ? `0 0 12px ${game.dimGlow}` : 'none',
+                    caretColor: game.accent,
+                  }}
+                  onFocus={e => { e.target.style.borderColor = game.accent; e.target.style.boxShadow = `0 0 16px ${game.glow}`; }}
+                  onBlur={e => { e.target.style.borderColor = letters[i] ? game.accent + '60' : 'rgba(255,255,255,0.06)'; e.target.style.boxShadow = letters[i] ? `0 0 12px ${game.dimGlow}` : 'none'; }}
+                />
+                {/* Game tag */}
+                <span
+                  className="font-mono text-[7px] tracking-widest uppercase text-center"
+                  style={{ color: '#333' }}
+                >
+                  {game.tag}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Assembled code preview */}
+          {assembled.replace(/\s/g, '') && (
+            <div className="flex justify-center gap-1.5">
+              {letters.map((l, i) => (
+                <span
+                  key={i}
+                  className="text-xl font-bold"
+                  style={{
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    color: l ? GAMES[i].accent : '#222',
+                    letterSpacing: '0.1em',
+                  }}
+                >
+                  {l || '·'}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Result feedback */}
+          {result === 'correct' && (
+            <div
+              className="flex items-center justify-center gap-3 py-3 rounded-lg font-mono text-sm tracking-widest uppercase"
+              style={{ background: 'rgba(57,255,20,0.06)', border: '1px solid rgba(57,255,20,0.3)', color: '#39ff14' }}
+            >
+              ✓ CODE CORRECT — ACCÈS AUTORISÉ
+            </div>
+          )}
+          {result === 'wrong' && (
+            <div
+              className="flex items-center justify-center gap-3 py-3 rounded-lg font-mono text-sm tracking-widest uppercase"
+              style={{ background: 'rgba(255,0,64,0.06)', border: '1px solid rgba(255,0,64,0.3)', color: '#ff0040' }}
+            >
+              ✗ CODE INCORRECT — RÉESSAIE
+            </div>
+          )}
+
+          {/* Validate button */}
+          <button
+            disabled={!allFilled}
+            onClick={validate}
+            className="w-full py-3 font-bold tracking-[0.15em] uppercase rounded-lg transition-all"
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: '0.95rem',
+              color: allFilled ? '#fff' : '#333',
+              background: 'transparent',
+              border: `1px solid ${allFilled ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.06)'}`,
+              cursor: allFilled ? 'pointer' : 'not-allowed',
+            }}
+            onMouseEnter={e => { if (allFilled) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = allFilled ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.06)'; }}
+          >
+            VALIDER LE CODE →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main App ─── */
 function App() {
   const [currentGame, setCurrentGame] = useState(null);
@@ -413,7 +696,7 @@ function App() {
           </button>
         </div>
         <div className="flex-grow relative">
-          <GameComponent onWin={handleWin} />
+          <GameComponent onWin={handleWin} onBack={() => setCurrentGame(null)} />
         </div>
       </div>
     );
@@ -424,6 +707,7 @@ function App() {
 
   return (
     <>
+      <MailboxPanel unlockedLevel={unlockedLevel} />
       {/* Global styles injected inline */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');
@@ -629,6 +913,9 @@ function App() {
               );
             })}
           </div>
+
+          {/* ── Secret Code ── */}
+          <SecretCodeSection />
 
           {/* ── Reset ── */}
           {unlockedLevel > 1 && (

@@ -305,10 +305,12 @@ const DIR_IMAGE = {
   down:  '/player-v.svg',
 }
 
+const SECRET_LETTER = 'U'
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function QuestGame() {
+export default function QuestGame({ onBack }) {
   const [levelIdx,   setLevelIdx]   = useState(0)
   const [pos,        setPos]        = useState(LEVELS[0].playerStart)
   const [dir,        setDir]        = useState('right')
@@ -331,12 +333,13 @@ export default function QuestGame() {
     const next = levelIdx + 1
     if (next >= LEVELS.length) {
       setGameOver(true)
+      if (onWin) onWin()
     } else {
       setLevelIdx(next)
       resetLevel(next)
       setWon(false)
     }
-  }, [levelIdx, resetLevel])
+  }, [levelIdx, resetLevel, onWin])
 
   // ---- restart from level 1 ----
   const restartGame = useCallback(() => {
@@ -359,6 +362,10 @@ export default function QuestGame() {
     }
 
     function handleKey(e) {
+      if (e.key === 'Enter') {
+        if (won) { nextLevel(); return }
+        return
+      }
       if (!KEYS.includes(e.key)) return
       e.preventDefault()
       if (won || gameOver) return
@@ -378,7 +385,7 @@ export default function QuestGame() {
 
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [won, gameOver, level])
+  }, [won, gameOver, level, nextLevel])
 
   const cs = cellSize(level.cols)
   const playerImg = won ? '/player-arrow.svg' : DIR_IMAGE[dir]
@@ -396,6 +403,13 @@ export default function QuestGame() {
             Les 10 niveaux ont été conquis.
           </p>
         </div>
+
+        {/* Lettre secrète */}
+        <div style={{ border: '1px solid rgba(255,208,0,0.45)', borderRadius: '14px', padding: '18px 48px', textAlign: 'center', boxShadow: '0 0 28px rgba(255,208,0,0.15)' }}>
+          <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#666', fontSize: '11px', letterSpacing: '0.3em', textTransform: 'uppercase', margin: '0 0 10px' }}>Lettre secrète</p>
+          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '5rem', color: '#ffd000', textShadow: '0 0 28px rgba(255,208,0,0.6)', lineHeight: 1, display: 'block' }}>{SECRET_LETTER}</span>
+        </div>
+
         <button
           onClick={restartGame}
           className="text-sm px-8 py-3 rounded transition-all tracking-widest uppercase"
@@ -405,6 +419,17 @@ export default function QuestGame() {
         >
           RECOMMENCER LA QUÊTE
         </button>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="text-sm px-8 py-3 rounded transition-all tracking-widest uppercase"
+            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: '#555', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+          >
+            ← ARCADE
+          </button>
+        )}
       </div>
       </>
     )
