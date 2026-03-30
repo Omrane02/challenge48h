@@ -6,6 +6,7 @@ import ControlGlitch from "@/components/control-glitch/control-glitch";
 import MemoryGame from "@/components/memory-game/memory-game";
 import QuestGame from "@/components/quest-game/QuestGame";
 import MirrorSequence from "@/components/mirror-game/mirror";
+import TuneSwitch from "@/components/Tune swicth/tune-switch";
 
 function App() {
   const [currentGame, setCurrentGame] = useState(null);
@@ -26,7 +27,8 @@ function App() {
     { id: 'glitch', name: 'Control Glitch', component: ControlGlitch, description: 'Maîtrise le contrôle' },
     { id: 'memory', name: 'Memory Game', component: MemoryGame, description: 'Exerce ta mémoire' },
     { id: 'quest', name: 'Quest Game', component: QuestGame, description: 'Embark on a quest' },
-    { id: 'mirror', name: 'Mirror Sequence', component: MirrorSequence, description: 'Suis la séquence' }
+    { id: 'mirror', name: 'Mirror Sequence', component: MirrorSequence, description: 'Suis la séquence' },
+    { id: 'tune', name: 'Tune Switch', component: TuneSwitch, description: 'Accorde les cordes avant qu\'elles cassent !' }
   ];
 
   // Fonction à appeler quand un joueur réussit un mini-jeu
