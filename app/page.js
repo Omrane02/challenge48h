@@ -22,11 +22,11 @@ function App() {
   }, []);
 
   const games = [
-    { id: 'rhythm', name: 'Jeu de Rythme', component: RhythmGame, description: 'Teste ton sens du rythme' },
-    { id: 'glitch', name: 'Control Glitch', component: ControlGlitch, description: 'Maîtrise le contrôle' },
-    { id: 'memory', name: 'Memory Game', component: MemoryGame, description: 'Exerce ta mémoire' },
-    { id: 'quest', name: 'Quest Game', component: QuestGame, description: 'Embark on a quest' },
-    { id: 'mirror', name: 'Mirror Sequence', component: MirrorSequence, description: 'Suis la séquence' }
+    { id: 'rhythm', name: 'Jeu de Rythme', component: RhythmGame, description: 'Teste ton sens du rythme', image: 'rythme' },
+    { id: 'glitch', name: 'Control Glitch', component: ControlGlitch, description: 'Maîtrise le contrôle', image: 'glitch' },
+    { id: 'memory', name: 'Memory Game', component: MemoryGame, description: 'Exerce ta mémoire', image: 'mind' },
+    { id: 'quest', name: 'Quest Game', component: QuestGame, description: 'Embark on a quest', image: 'carte' },
+    { id: 'mirror', name: 'Mirror Sequence', component: MirrorSequence, description: 'Suis la séquence', image: 'mirroir' }
   ];
 
   // Fonction à appeler quand un joueur réussit un mini-jeu
@@ -130,11 +130,24 @@ function App() {
                 {/* Contenu de la carte */}
                 <div className="z-10 flex flex-col h-full w-full">
                     
-                    {/* Zone Visuelle / Icône */}
-                    <div className={`h-28 w-full rounded-xl mb-4 flex items-center justify-center text-4xl shadow-inner
+                    {/* Zone Visuelle / Image */}
+                    <div className={`h-28 w-full rounded-xl mb-4 flex items-center justify-center overflow-hidden shadow-inner relative
                         ${isUnlocked ? 'bg-gradient-to-br from-indigo-900/80 to-purple-900/80' : 'bg-gray-950/80'}
                     `}>
-                         {isUnlocked ? '🎮' : '🔒'}
+                         {isUnlocked ? (
+                            <img 
+                                src={`/${game.image}.png`}
+                                alt={game.name}
+                                className="w-full h-full object-cover rounded-xl"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                         ) : null}
+                         <div className="w-full h-full items-center justify-center text-4xl hidden" style={{display: isUnlocked ? 'none' : 'flex'}}>
+                             🔒
+                         </div>
                     </div>
 
                     <h3 className={`text-xl font-bold mb-2 transition-colors ${isUnlocked ? 'text-white' : 'text-gray-600'}`}>
