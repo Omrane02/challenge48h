@@ -92,11 +92,12 @@ function shuffle(array) {
   return array;
 }
 
-export default function MemoryGame({ 
-  totalPairs = 12, 
-  maxMoves = 15, 
-  secretEmoji = '🦊', 
-  secretLetter = 'Z' 
+export default function MemoryGame({
+  totalPairs = 12,
+  maxMoves = 15,
+  secretEmoji = '🦊',
+  secretLetter = 'Z',
+  onWin,
 }) {
   const [cards, setCards] = useState([]);
   const [flippedIndices, setFlippedIndices] = useState([]);
@@ -151,6 +152,10 @@ export default function MemoryGame({
     startNewGame();
     return () => clearInterval(timerRef.current);
   }, [startNewGame]);
+
+  useEffect(() => {
+    if (gameStatus === 'won' && onWin) onWin();
+  }, [gameStatus, onWin]);
 
   // Handle Card Flip
   const handleCardClick = (index) => {

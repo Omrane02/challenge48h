@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 const NUM_STRINGS = 4;       // Number of guitar strings
 const GAME_DURATION = 120;   // Total game duration in seconds
-const REWARD_LETTER = 'T';   // Fragment shown on victory (part of the final password)
+const REWARD_LETTER = 'I';   // Fragment shown on victory (part of the final password)
 
 // The keyboard keys mapped to each string
 const KEYS = ['A', 'Z', 'E', 'R'];

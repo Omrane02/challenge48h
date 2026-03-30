@@ -42,7 +42,7 @@ const minimalStyles = `
   }
 `;
 
-export default function MirrorSequence() {
+export default function MirrorSequence({ onWin }) {
   const [screen, setScreen]       = useState('idle');
   const [round, setRound]         = useState(1);
   const [best, setBest]           = useState(0);
@@ -180,6 +180,7 @@ export default function MirrorSequence() {
       setResultBtnText('REJOUER');
       gameOverRef.current = true;
       setGameOver(true);
+      if (onWin) onWin();
     } else {
       setResultBadge({ text: 'RÉUSSI', cls: 'win' });
       setResultDetail(<>Manche {r} terminée avec succès.{fragmentEl}</>);

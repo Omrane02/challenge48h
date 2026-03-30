@@ -688,13 +688,14 @@ function EndScreen({ score, onReplay }) {
 
 // ─── ROOT COMPONENT ───────────────────────────────────────────────────────────
 
-export default function ControlGlitch() {
+export default function ControlGlitch({ onWin }) {
   const [gameState, setGameState] = useState('home'); // 'home' | 'playing' | 'ended'
   const [finalScore, setFinalScore] = useState(0);
 
   function handleGameEnd(score) {
     setFinalScore(score);
     setGameState('ended');
+    if (onWin) onWin();
   }
 
   if (gameState === 'playing') {

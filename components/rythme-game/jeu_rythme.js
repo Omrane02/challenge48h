@@ -225,7 +225,7 @@ function generateChart() {
 const CHART = generateChart();
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function RhythmGame() {
+export default function RhythmGame({ onWin }) {
   const [gameState,  setGameState]  = useState('idle');
   const [score,      setScore]      = useState(0);
   const [misses,     setMisses]     = useState(0);
@@ -415,6 +415,10 @@ export default function RhythmGame() {
       window.removeEventListener('keyup',   onKeyUp);
     };
   }, [gameState, showFeedback]);
+
+  useEffect(() => {
+    if (gameState === 'win' && onWin) onWin();
+  }, [gameState, onWin]);
 
   useEffect(() => {
     return () => {
