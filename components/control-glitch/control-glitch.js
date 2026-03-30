@@ -531,7 +531,7 @@ function GameBoard({ onGameEnd }) {
   );
 
   return (
-    <div className={`min-h-screen bg-[#04040f] flex flex-col relative overflow-hidden ${shaking ? 'screen-shake' : ''}`}>
+    <div className={`min-h-screen bg-[#05050f] flex flex-col relative overflow-hidden ${shaking ? 'screen-shake' : ''}`}>
       {flashing && <div className="absolute inset-0 bg-[#ff0040] z-50 pointer-events-none flash-red" />}
       <div className="absolute inset-0 scanlines pointer-events-none z-10" />
 
@@ -638,7 +638,7 @@ function EndScreen({ score, onReplay }) {
   }, [visible, score]);
 
   return (
-    <div className="min-h-screen bg-[#04040f] flex flex-col items-center justify-center relative overflow-hidden px-6">
+    <div className="min-h-screen bg-[#05050f] flex flex-col items-center justify-center relative overflow-hidden px-6">
       <div className="absolute inset-0 scanlines pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse at 50% 40%, ${perf.color}08 0%, transparent 65%)` }} />
       <div className="absolute top-8 left-8 w-16 h-16 border-t-2 border-l-2 opacity-30" style={{ borderColor: perf.color }} />
@@ -675,7 +675,7 @@ function EndScreen({ score, onReplay }) {
           onClick={onReplay}
           className="group relative font-orbitron font-bold text-base tracking-widest uppercase px-14 py-4 border-2 transition-all duration-200 cursor-pointer"
           style={{ borderColor: perf.color, color: perf.color }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = perf.color; e.currentTarget.style.color = '#04040f'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = perf.color; e.currentTarget.style.color = '#05050f'; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = perf.color; }}
         >
           REJOUER
@@ -718,7 +718,7 @@ export default function ControlGlitch() {
   return (
     <>
       <style>{glitchStyles}</style>
-      <div className="min-h-screen bg-[#04040f] flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-[#05050f] flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-100 pointer-events-none" />
         <div className="absolute inset-0 scanlines pointer-events-none" />
 
@@ -765,7 +765,7 @@ export default function ControlGlitch() {
               onClick={() => setGameState('playing')}
               className="group relative font-orbitron font-bold text-lg md:text-xl tracking-widest uppercase px-14 py-4 border-2 transition-all duration-200 cursor-pointer"
               style={{ borderColor: '#39ff14', color: '#39ff14' }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#39ff14'; e.currentTarget.style.color = '#04040f'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#39ff14'; e.currentTarget.style.color = '#05050f'; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#39ff14'; }}
             >
               LANCER LE JEU

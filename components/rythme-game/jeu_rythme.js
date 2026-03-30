@@ -429,11 +429,13 @@ export default function RhythmGame() {
   const livesLeft = MISS_LIMIT - misses;
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-[#050000] font-[Segoe_UI,monospace]">
+    <>
+    <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');`}</style>
+    <div className="flex justify-center items-center min-h-screen bg-[#05050f]" style={{ fontFamily: "'Share Tech Mono', monospace" }}>
       <div className="flex flex-col items-center gap-4">
       <div
-        className="relative bg-gradient-to-b from-[#100000] to-[#060000] border-2 border-[#3a0000] rounded-[10px] overflow-hidden shadow-[0_0_50px_rgba(180,0,0,0.35)]"
-        style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
+        className="relative border-2 rounded-[10px] overflow-hidden"
+        style={{ width: GAME_WIDTH, height: GAME_HEIGHT, background: 'linear-gradient(180deg, #0a0a1e 0%, #05050f 100%)', borderColor: 'rgba(0,229,255,0.2)', boxShadow: '0 0 50px rgba(0,229,255,0.1)' }}
       >
 
         {/* ── HUD ── */}
@@ -462,7 +464,7 @@ export default function RhythmGame() {
             <div 
               key={i} 
               className="flex-1" 
-              style={{ borderRight: i < 3 ? '1px solid #1e0000' : 'none' }}
+              style={{ borderRight: i < 3 ? '1px solid rgba(0,229,255,0.06)' : 'none' }}
             />
           ))}
         </div>
@@ -542,12 +544,12 @@ export default function RhythmGame() {
 
         {/* ── Screen: idle ── */}
         {gameState === 'idle' && (
-          <div className="absolute inset-0 bg-black/92 flex flex-col items-center justify-center z-[100] gap-3.5">
-            <h1 className="text-[#FF0000] text-[44px] font-bold m-0 [text-shadow:0_0_25px_#FF0000] tracking-[5px]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-[100] gap-3.5" style={{ background: 'rgba(5,5,15,0.96)' }}>
+            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#00e5ff', textShadow: '0 0 25px rgba(0,229,255,0.6)', letterSpacing: '0.15em', margin: 0 }}>
               RHYTHM RUSH
             </h1>
-            <p className="text-[#ccc] text-[15px] m-0 text-center px-5">
-              Survivez 2 minutes pour révéler la lettre secrète !
+            <p className="text-[13px] m-0 text-center px-5 tracking-widest uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>
+              Survivez 2 minutes pour révéler la lettre secrète
             </p>
             <div className="flex gap-5 mt-1">
               {LANES.map((l, i) => (
@@ -559,11 +561,14 @@ export default function RhythmGame() {
                 </div>
               ))}
             </div>
-            <p className="text-[#cc3333] text-[13px] m-0">
-              {MISS_LIMIT} vies · appuyer à vide = -1 vie · +1 vie tous les {HITS_PER_LIFE} hits
+            <p className="text-[13px] m-0 tracking-wider" style={{ color: 'rgba(0,229,255,0.5)', fontFamily: "'Share Tech Mono', monospace" }}>
+              {MISS_LIMIT} vies · à vide = -1 vie · +1 vie / {HITS_PER_LIFE} hits
             </p>
             <button
-              className="mt-2 py-3 px-9 text-[18px] font-bold bg-[#990000] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(180,0,0,0.6)] transition-transform active:scale-95"
+              className="mt-2 py-3 px-9 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-95"
+              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1rem', fontWeight: 700, color: '#00e5ff', background: 'transparent', border: '1px solid #00e5ff', borderRadius: '6px' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#00e5ff'; e.currentTarget.style.color = '#000'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#00e5ff'; }}
               onClick={startGame}
             >
               ▶ JOUER
@@ -573,14 +578,17 @@ export default function RhythmGame() {
 
         {/* ── Screen: gameover ── */}
         {gameState === 'gameover' && (
-          <div className="absolute inset-0 bg-black/92 flex flex-col items-center justify-center z-[100] gap-3.5">
-            <h2 className="text-[#FF0000] text-[38px] m-0 [text-shadow:0_0_30px_#FF0000]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-[100] gap-3.5" style={{ background: 'rgba(5,5,15,0.96)' }}>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#ff0040', textShadow: '0 0 30px rgba(255,0,64,0.6)', letterSpacing: '0.15em', margin: 0 }}>
               GAME OVER
             </h2>
-            <p className="text-[#ccc] text-[18px] m-0">Score : {score.toLocaleString()}</p>
-            <p className="text-[#666] text-[14px] m-0">Trop de fautes…</p>
+            <p className="text-[16px] m-0 tracking-widest" style={{ color: '#aaa', fontFamily: "'Share Tech Mono', monospace" }}>Score : {score.toLocaleString()}</p>
+            <p className="text-[13px] m-0 tracking-wider uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>Trop de fautes…</p>
             <button
-              className="mt-2 py-3 px-9 text-[18px] font-bold bg-[#990000] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(180,0,0,0.6)] transition-transform active:scale-95"
+              className="mt-2 py-3 px-9 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-95"
+              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1rem', fontWeight: 700, color: '#00e5ff', background: 'transparent', border: '1px solid #00e5ff', borderRadius: '6px' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#00e5ff'; e.currentTarget.style.color = '#000'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#00e5ff'; }}
               onClick={startGame}
             >
               RECOMMENCER
@@ -590,20 +598,23 @@ export default function RhythmGame() {
 
         {/* ── Screen: win ── */}
         {gameState === 'win' && (
-          <div className="absolute inset-0 bg-black/92 flex flex-col items-center justify-center z-[100] gap-3.5">
-            <h2 className="text-white text-[38px] m-0 [text-shadow:0_0_20px_rgba(255,255,255,0.6)]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-[100] gap-3.5" style={{ background: 'rgba(5,5,15,0.96)' }}>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#00e5ff', textShadow: '0 0 20px rgba(0,229,255,0.6)', letterSpacing: '0.15em', margin: 0 }}>
               VICTOIRE !
             </h2>
-            <p className="text-[#ccc] text-[18px] m-0">Score : {score.toLocaleString()}</p>
-            <p className="text-[#888] text-[14px] m-0">Tu as survécu aux 2 minutes !</p>
-            <div className="border-2 border-[#FF0000] rounded-[14px] py-3.5 px-9 text-center shadow-[0_0_24px_rgba(255,0,0,0.4)] mt-2">
-              <p className="text-[#888] text-[13px] m-0 mb-2">Lettre secrète :</p>
-              <span className="text-[#FF0000] text-[72px] font-bold [text-shadow:0_0_24px_#FF0000] block leading-none">
+            <p className="text-[16px] m-0 tracking-widest" style={{ color: '#aaa', fontFamily: "'Share Tech Mono', monospace" }}>Score : {score.toLocaleString()}</p>
+            <p className="text-[13px] m-0 tracking-wider uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>Tu as survécu aux 2 minutes !</p>
+            <div className="py-3.5 px-9 text-center mt-2" style={{ border: '1px solid rgba(0,229,255,0.4)', borderRadius: '12px', boxShadow: '0 0 24px rgba(0,229,255,0.15)' }}>
+              <p className="text-[13px] m-0 mb-2 uppercase tracking-widest" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>Lettre secrète :</p>
+              <span className="block leading-none" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '72px', color: '#00e5ff', textShadow: '0 0 24px rgba(0,229,255,0.6)' }}>
                 {SECRET_LETTER}
               </span>
             </div>
             <button
-              className="mt-4 py-3 px-9 text-[18px] font-bold bg-[#990000] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(180,0,0,0.6)] transition-transform active:scale-95"
+              className="mt-4 py-3 px-9 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-95"
+              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1rem', fontWeight: 700, color: '#00e5ff', background: 'transparent', border: '1px solid #00e5ff', borderRadius: '6px' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#00e5ff'; e.currentTarget.style.color = '#000'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#00e5ff'; }}
               onClick={startGame}
             >
               REJOUER
@@ -635,5 +646,6 @@ export default function RhythmGame() {
 
       </div>
     </div>
+    </>
   );
 }
