@@ -270,33 +270,41 @@ export default function QuestGame() {
   // ---- Game Complete screen ----
   if (gameOver) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-8 px-4">
-        <Image src="/player-arrow.svg" alt="flèche" width={80} height={80} className="drop-shadow-[0_0_20px_#34d399]" />
+      <>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');`}</style>
+      <div className="min-h-screen bg-[#05050f] flex flex-col items-center justify-center gap-8 px-4">
+        <Image src="/player-arrow.svg" alt="flèche" width={80} height={80} style={{ filter: 'drop-shadow(0 0 20px rgba(255,208,0,0.6))' }} />
         <div className="text-center space-y-2">
-          <h1 className="font-mono text-3xl font-bold text-emerald-400 tracking-widest">VICTOIRE ABSOLUE</h1>
-          <p className="font-mono text-zinc-400 text-sm tracking-wide">
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#ffd000', textShadow: '0 0 20px rgba(255,208,0,0.5)', letterSpacing: '0.15em' }}>VICTOIRE ABSOLUE</h1>
+          <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#555', fontSize: '0.85rem', letterSpacing: '0.1em' }}>
             Les 10 niveaux ont été conquis.
           </p>
         </div>
         <button
           onClick={restartGame}
-          className="font-mono text-sm px-8 py-3 rounded border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 transition-colors tracking-widest"
+          className="text-sm px-8 py-3 rounded transition-all tracking-widest uppercase"
+          style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: '#ffd000', border: '1px solid #ffd000', background: 'transparent' }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#ffd000'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#ffd000'; }}
         >
-          [ RECOMMENCER LA QUÊTE ]
+          RECOMMENCER LA QUÊTE
         </button>
       </div>
+      </>
     )
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-5 px-4 py-8">
+    <>
+    <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');`}</style>
+    <div className="min-h-screen bg-[#05050f] flex flex-col items-center justify-center gap-5 px-4 py-8">
 
       {/* ---- Header ---- */}
       <div className="text-center space-y-1">
-        <h1 className="font-mono text-xl font-bold tracking-widest text-emerald-400 uppercase">
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.2rem', color: '#ffd000', textShadow: '0 0 16px rgba(255,208,0,0.4)', letterSpacing: '0.15em' }}>
           La Quête de la Pointe
         </h1>
-        <p className="font-mono text-xs text-zinc-600 tracking-wider">
+        <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#444', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
           flèches directionnelles pour avancer
         </p>
       </div>
@@ -308,7 +316,7 @@ export default function QuestGame() {
             key={i}
             className={`w-2 h-2 rounded-full transition-colors ${
               i < levelIdx
-                ? 'bg-emerald-600'
+                ? 'bg-[#c8a000]'
                 : i === levelIdx
                   ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]'
                   : 'bg-zinc-700'
@@ -319,7 +327,7 @@ export default function QuestGame() {
 
       {/* ---- Level name ---- */}
       <div className="text-center">
-        <span className="font-mono text-sm text-emerald-400 font-semibold tracking-widest">
+        <span className="font-mono text-sm text-[#ffd000] font-semibold tracking-widest">
           {level.label}
         </span>
         <span className="font-mono text-xs text-zinc-500 ml-3 tracking-wide">
@@ -348,19 +356,25 @@ export default function QuestGame() {
               height={60}
               className="drop-shadow-[0_0_14px_#34d399]"
             />
-            <p className="font-mono text-lg font-bold text-emerald-400 tracking-widest text-center">
+            <p className="font-mono text-lg font-bold text-[#ffd000] tracking-widest text-center">
               {levelIdx === LEVELS.length - 1 ? 'QUÊTE ACCOMPLIE !' : `${level.label} — Terminé !`}
             </p>
             <p className="font-mono text-xs text-zinc-500">{steps} pas</p>
             <button
               onClick={levelIdx === LEVELS.length - 1 ? () => setGameOver(true) : nextLevel}
-              className="font-mono text-sm px-6 py-2 rounded border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 transition-colors tracking-widest"
+              className="text-sm px-6 py-2 rounded transition-all tracking-widest uppercase"
+              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: '#ffd000', border: '1px solid #ffd000', background: 'transparent' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#ffd000'; e.currentTarget.style.color = '#000'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#ffd000'; }}
             >
-              {levelIdx === LEVELS.length - 1 ? '[ VICTOIRE FINALE ]' : '[ NIVEAU SUIVANT → ]'}
+              {levelIdx === LEVELS.length - 1 ? 'VICTOIRE FINALE' : 'NIVEAU SUIVANT →'}
             </button>
             <button
               onClick={() => resetLevel()}
-              className="font-mono text-xs text-zinc-600 hover:text-zinc-400 transition-colors tracking-wider"
+              className="text-xs transition-colors tracking-wider"
+              style={{ fontFamily: "'Share Tech Mono', monospace", color: '#444', background: 'none', border: 'none', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#888'}
+              onMouseLeave={e => e.currentTarget.style.color = '#444'}
             >
               recommencer ce niveau
             </button>
@@ -430,6 +444,7 @@ export default function QuestGame() {
       </div>
 
     </div>
+    </>
   )
 }
 

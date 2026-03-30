@@ -6,6 +6,7 @@ import ControlGlitch from "@/components/control-glitch/control-glitch";
 import MemoryGame from "@/components/memory-game/memory-game";
 import QuestGame from "@/components/quest-game/QuestGame";
 import MirrorSequence from "@/components/mirror-game/mirror";
+import TuneSwitch from "@/components/Tune swicth/tune-switch";
 
 /* ─── Game metadata with per-game identity ─── */
 const GAMES = [
@@ -73,6 +74,19 @@ const GAMES = [
     dimGlow: 'rgba(57,255,20,0.08)',
     icon: '⬡',
     iconBg: 'radial-gradient(circle at 40% 35%, #0a2000 0%, #040d00 100%)',
+  },
+  {
+    id: 'tune',
+    name: 'Tune Switch',
+    component: TuneSwitch,
+    description: 'Accorde les cordes avant qu\'elles cassent.',
+    tag: 'MUSIQUE',
+    number: '06',
+    accent: '#facc15',
+    glow: 'rgba(250,204,21,0.35)',
+    dimGlow: 'rgba(250,204,21,0.08)',
+    icon: '♪',
+    iconBg: 'radial-gradient(circle at 40% 35%, #2a2200 0%, #100e00 100%)',
   },
 ];
 
@@ -340,11 +354,12 @@ function App() {
   }, []);
 
   const games = [
-    { id: 'rhythm', name: 'Jeu de Rythme', component: RhythmGame, description: 'Teste ton sens du rythme', image: 'rythme' },
-    { id: 'glitch', name: 'Control Glitch', component: ControlGlitch, description: 'Maîtrise le contrôle', image: 'glitch' },
-    { id: 'memory', name: 'Memory Game', component: MemoryGame, description: 'Exerce ta mémoire', image: 'mind' },
-    { id: 'quest', name: 'Quest Game', component: QuestGame, description: 'Embark on a quest', image: 'carte' },
-    { id: 'mirror', name: 'Mirror Sequence', component: MirrorSequence, description: 'Suis la séquence', image: 'mirroir' }
+    { id: 'rhythm', name: 'Jeu de Rythme', component: RhythmGame, description: 'Teste ton sens du rythme' },
+    { id: 'glitch', name: 'Control Glitch', component: ControlGlitch, description: 'Maîtrise le contrôle' },
+    { id: 'memory', name: 'Memory Game', component: MemoryGame, description: 'Exerce ta mémoire' },
+    { id: 'quest', name: 'Quest Game', component: QuestGame, description: 'Embark on a quest' },
+    { id: 'mirror', name: 'Mirror Sequence', component: MirrorSequence, description: 'Suis la séquence' },
+    { id: 'tune', name: 'Tune Switch', component: TuneSwitch, description: 'Accorde les cordes avant qu\'elles cassent !' }
   ];
 
   // Fonction à appeler quand un joueur réussit un mini-jeu
@@ -479,7 +494,7 @@ function App() {
         />
 
         {/* Floating background glyphs */}
-        {['⬡', '◈', '⊗', '♩', '⚔'].map((g, i) => (
+        {['⬡', '◈', '⊗', '♩', '⚔', '♪'].map((g, i) => (
           <div
             key={i}
             className="absolute select-none pointer-events-none text-white"
@@ -595,7 +610,7 @@ function App() {
           </div>
 
           {/* ── Game cards grid ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
             {GAMES.map((game, index) => {
               const isUnlocked = index < unlockedLevel;
               const isNextToUnlock = index === unlockedLevel;
