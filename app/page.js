@@ -75,6 +75,19 @@ const GAMES = [
     icon: '⬡',
     iconBg: 'radial-gradient(circle at 40% 35%, #0a2000 0%, #040d00 100%)',
   },
+  {
+    id: 'tune',
+    name: 'Tune Switch',
+    component: TuneSwitch,
+    description: 'Accorde les cordes avant qu\'elles cassent.',
+    tag: 'MUSIQUE',
+    number: '06',
+    accent: '#facc15',
+    glow: 'rgba(250,204,21,0.35)',
+    dimGlow: 'rgba(250,204,21,0.08)',
+    icon: '♪',
+    iconBg: 'radial-gradient(circle at 40% 35%, #2a2200 0%, #100e00 100%)',
+  },
 ];
 
 /* ─── Animated grid bg (canvas) ─── */
@@ -341,20 +354,12 @@ function App() {
   }, []);
 
   const games = [
-<<<<<<< HEAD
     { id: 'rhythm', name: 'Jeu de Rythme', component: RhythmGame, description: 'Teste ton sens du rythme' },
     { id: 'glitch', name: 'Control Glitch', component: ControlGlitch, description: 'Maîtrise le contrôle' },
     { id: 'memory', name: 'Memory Game', component: MemoryGame, description: 'Exerce ta mémoire' },
     { id: 'quest', name: 'Quest Game', component: QuestGame, description: 'Embark on a quest' },
     { id: 'mirror', name: 'Mirror Sequence', component: MirrorSequence, description: 'Suis la séquence' },
     { id: 'tune', name: 'Tune Switch', component: TuneSwitch, description: 'Accorde les cordes avant qu\'elles cassent !' }
-=======
-    { id: 'rhythm', name: 'Jeu de Rythme', component: RhythmGame, description: 'Teste ton sens du rythme', image: 'rythme' },
-    { id: 'glitch', name: 'Control Glitch', component: ControlGlitch, description: 'Maîtrise le contrôle', image: 'glitch' },
-    { id: 'memory', name: 'Memory Game', component: MemoryGame, description: 'Exerce ta mémoire', image: 'mind' },
-    { id: 'quest', name: 'Quest Game', component: QuestGame, description: 'Embark on a quest', image: 'carte' },
-    { id: 'mirror', name: 'Mirror Sequence', component: MirrorSequence, description: 'Suis la séquence', image: 'mirroir' }
->>>>>>> ce03648dfe5a6a6d812c58f80f964140ee3b3f14
   ];
 
   // Fonction à appeler quand un joueur réussit un mini-jeu
@@ -489,7 +494,7 @@ function App() {
         />
 
         {/* Floating background glyphs */}
-        {['⬡', '◈', '⊗', '♩', '⚔'].map((g, i) => (
+        {['⬡', '◈', '⊗', '♩', '⚔', '♪'].map((g, i) => (
           <div
             key={i}
             className="absolute select-none pointer-events-none text-white"
@@ -605,7 +610,7 @@ function App() {
           </div>
 
           {/* ── Game cards grid ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
             {GAMES.map((game, index) => {
               const isUnlocked = index < unlockedLevel;
               const isNextToUnlock = index === unlockedLevel;
