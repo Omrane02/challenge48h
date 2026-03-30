@@ -123,7 +123,6 @@ export default function RhythmGame() {
     if (!activeRef.current) return;
 
     const elapsed   = performance.now() - gameStartRef.current;
-    // elapsed is negative during grace period
     const remaining = Math.min(GAME_DURATION, Math.max(0, GAME_DURATION - elapsed / 1000));
     setTimeLeft(Math.ceil(remaining));
     setGrace(elapsed < 0);
@@ -190,8 +189,7 @@ export default function RhythmGame() {
     setActiveKeys({});
     setTimeLeft(GAME_DURATION);
     setGrace(true);
-    // Offset start into the future so elapsed is negative during grace period
-    // First arrow appears at top after GRACE_MS, then travels for TRAVEL_TIME_MS
+    
     gameStartRef.current = performance.now() + TRAVEL_TIME_MS + GRACE_MS;
     activeRef.current    = true;
     setGameState('playing');
@@ -230,7 +228,6 @@ export default function RhythmGame() {
         setScore(scoreRef.current);
         setCombo(comboRef.current);
 
-        // Recover 1 life every HITS_PER_LIFE successful hits
         if (hitsForLifeRef.current % HITS_PER_LIFE === 0 && missesRef.current > 0) {
           missesRef.current -= 1;
           setMisses(missesRef.current);
@@ -271,41 +268,57 @@ export default function RhythmGame() {
   const livesLeft = MISS_LIMIT - misses;
 
   return (
-    <div style={s.root}>
-      <div style={s.game}>
+    <div className="flex justify-center items-center min-h-screen bg-[#080810] font-[Segoe_UI,monospace]">
+      <div 
+        className="relative bg-gradient-to-b from-[#0d0d1f] to-[#0a0a18] border-2 border-[#222] rounded-[10px] overflow-hidden shadow-[0_0_50px_rgba(100,0,255,0.25)]"
+        style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
+      >
 
         {/* ── HUD ── */}
-        <div style={s.hud}>
-          <span style={s.hudItem}>⭐ {score.toLocaleString()}</span>
-          <span style={{ ...s.hudItem, color: danger ? '#ff5555' : '#fff', fontWeight: 'bold', fontSize: 18 }}>
+        <div className="absolute top-0 left-0 right-0 flex justify-between items-center py-2 px-[14px] bg-black/55 z-[20]">
+          <span className="text-[#ddd] text-[13px]">⭐ {score.toLocaleString()}</span>
+          <span 
+            className={`text-[18px] font-bold ${danger ? 'text-[#ff5555]' : 'text-white'}`}
+          >
             {mins}:{secs}
           </span>
-          <span style={s.hudItem}>
+          <span className="text-[#ddd] text-[13px]">
             {'❤️'.repeat(Math.max(0, livesLeft))}{'🖤'.repeat(Math.max(0, misses))}
           </span>
         </div>
 
         {/* ── Combo ── */}
         {combo > 2 && gameState === 'playing' && !grace && (
-          <div style={s.comboBanner}>{combo}× COMBO</div>
+          <div className="absolute top-9 left-1/2 -translate-x-1/2 text-[#FFD700] text-[15px] font-bold z-[15] whitespace-nowrap [text-shadow:0_0_10px_#FFD700]">
+            {combo}× COMBO
+          </div>
         )}
 
         {/* ── Lane backgrounds ── */}
-        <div style={s.laneRow}>
+        <div className="absolute inset-0 flex">
           {LANES.map((_l, i) => (
-            <div key={i} style={{ ...s.lane, borderRight: i < 3 ? '1px solid #1c1c30' : 'none' }} />
+            <div 
+              key={i} 
+              className="flex-1" 
+              style={{ borderRight: i < 3 ? '1px solid #1c1c30' : 'none' }} 
+            />
           ))}
         </div>
 
         {/* ── Hit line ── */}
-        <div style={{ ...s.hitLine, top: RECEPTOR_Y }} />
+        <div 
+          className="absolute left-0 right-0 h-[2px] bg-white/5 z-[5]" 
+          style={{ top: RECEPTOR_Y }} 
+        />
 
         {/* ── Receptors ── */}
         {LANES.map((lane, i) => (
           <div
             key={i}
+            className="absolute border-2 rounded-lg flex items-center justify-center z-[10] transition-[box-shadow,background-color] duration-75"
             style={{
-              ...s.receptor,
+              width:           ARROW_SIZE,
+              height:          ARROW_SIZE,
               left:            i * LANE_WIDTH + (LANE_WIDTH - ARROW_SIZE) / 2,
               top:             RECEPTOR_Y - ARROW_SIZE / 2,
               borderColor:     lane.color,
@@ -328,15 +341,13 @@ export default function RhythmGame() {
           .map(arrow => (
             <div
               key={arrow.id}
+              className="absolute pointer-events-none z-[8]"
               style={{
-                position:      'absolute',
                 left:          arrow.lane * LANE_WIDTH + (LANE_WIDTH - ARROW_SIZE) / 2,
                 top:           arrow.y - ARROW_SIZE / 2,
                 width:         ARROW_SIZE,
                 height:        ARROW_SIZE,
-                pointerEvents: 'none',
                 filter:        `drop-shadow(0 0 7px ${LANES[arrow.lane].color})`,
-                zIndex:        8,
               }}
             >
               <ArrowSVG direction={LANES[arrow.lane].key} color={LANES[arrow.lane].color} size={ARROW_SIZE} />
@@ -346,35 +357,48 @@ export default function RhythmGame() {
 
         {/* ── Feedback pop ── */}
         {feedback && (
-          <div style={{
-            ...s.feedback,
-            left:  feedback.lane * LANE_WIDTH + LANE_WIDTH / 2,
-            color: feedback.text === 'MISS'    ? '#ff5555' :
-                   feedback.text === '+VIE !'  ? '#ff88ff' :
-                   feedback.text === 'PERFECT!'? '#FFD700' : '#A8FF6B',
-          }}>
+          <div 
+            className="absolute font-bold pointer-events-none z-[25] whitespace-nowrap tracking-[1px] [text-shadow:0_0_8px_currentColor] -translate-x-1/2 text-[15px]"
+            style={{
+              top:   RECEPTOR_Y - 90,
+              left:  feedback.lane * LANE_WIDTH + LANE_WIDTH / 2,
+              color: feedback.text === 'MISS'    ? '#ff5555' :
+                     feedback.text === '+VIE !'  ? '#ff88ff' :
+                     feedback.text === 'PERFECT!'? '#FFD700' : '#A8FF6B',
+            }}
+          >
             {feedback.text}
           </div>
         )}
 
         {/* ── Grace period banner ── */}
         {gameState === 'playing' && grace && (
-          <div style={s.graceBanner}>PRÊT…</div>
+          <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#A855F7] text-[32px] font-bold z-[15] whitespace-nowrap tracking-[4px] [text-shadow:0_0_20px_#A855F7]">
+            PRÊT…
+          </div>
         )}
 
         {/* ── Key legend (bottom-right) ── */}
         {gameState === 'playing' && (
-          <div style={s.keyLegend}>
-            <div style={s.keyRow}>
+          <div className="absolute bottom-3.5 right-3.5 flex flex-col gap-1 z-[15]">
+            <div className="flex gap-1.5">
               {LANES.map((lane, i) => (
-                <div key={i} style={{ ...s.keyCap, borderColor: lane.color, color: lane.color }}>
+                <div 
+                  key={i} 
+                  className="w-[26px] h-[26px] border-2 rounded-[5px] flex items-center justify-center text-[12px] font-bold bg-black/60"
+                  style={{ borderColor: lane.color, color: lane.color }}
+                >
                   {lane.altKey}
                 </div>
               ))}
             </div>
-            <div style={s.keyRow}>
+            <div className="flex gap-1.5">
               {LANES.map((lane, i) => (
-                <div key={i} style={{ ...s.keyCap, borderColor: lane.color, color: lane.color }}>
+                <div 
+                  key={i} 
+                  className="w-[26px] h-[26px] border-2 rounded-[5px] flex items-center justify-center text-[12px] font-bold bg-black/60"
+                  style={{ borderColor: lane.color, color: lane.color }}
+                >
                   {lane.label}
                 </div>
               ))}
@@ -384,49 +408,72 @@ export default function RhythmGame() {
 
         {/* ── Screen: idle ── */}
         {gameState === 'idle' && (
-          <div style={s.overlay}>
-            <h1 style={s.bigTitle}>RHYTHM RUSH</h1>
-            <p style={s.sub}>Survivez 2 minutes pour révéler la lettre secrète !</p>
-            <div style={s.keyHint}>
+          <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-[100] gap-3.5">
+            <h1 className="text-[#A855F7] text-[44px] font-bold m-0 [text-shadow:0_0_25px_#A855F7] tracking-[5px]">
+              RHYTHM RUSH
+            </h1>
+            <p className="text-[#ccc] text-[15px] m-0 text-center px-5">
+              Survivez 2 minutes pour révéler la lettre secrète !
+            </p>
+            <div className="flex gap-5 mt-1">
               {LANES.map((l, i) => (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <div key={i} className="flex flex-col items-center gap-1.5">
                   <ArrowSVG direction={l.key} color={l.color} size={34} />
-                  <span style={{ color: l.color, fontSize: 11, fontFamily: 'monospace' }}>{l.altKey} / {l.label}</span>
+                  <span className="text-[11px] font-mono" style={{ color: l.color }}>
+                    {l.altKey} / {l.label}
+                  </span>
                 </div>
               ))}
             </div>
-            <p style={{ color: '#ff7777', fontSize: 13, margin: 0 }}>
+            <p className="text-[#ff7777] text-[13px] m-0">
               Plus de {MISS_LIMIT} ratés = Game Over · +1 vie tous les {HITS_PER_LIFE} hits
             </p>
-            <button style={s.btn} onClick={startGame}>▶ JOUER</button>
+            <button 
+              className="mt-2 py-3 px-9 text-[18px] font-bold bg-[#7C3AED] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-transform active:scale-95" 
+              onClick={startGame}
+            >
+              ▶ JOUER
+            </button>
           </div>
         )}
 
         {/* ── Screen: gameover ── */}
         {gameState === 'gameover' && (
-          <div style={s.overlay}>
-            <h2 style={{ color: '#ff5555', fontSize: 38, margin: 0, textShadow: '0 0 20px #ff5555' }}>
+          <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-[100] gap-3.5">
+            <h2 className="text-[#ff5555] text-[38px] m-0 [text-shadow:0_0_20px_#ff5555]">
               GAME OVER
             </h2>
-            <p style={{ color: '#ccc', fontSize: 18 }}>Score : {score.toLocaleString()}</p>
-            <p style={{ color: '#888', fontSize: 14 }}>Trop de flèches ratées…</p>
-            <button style={s.btn} onClick={startGame}>RECOMMENCER</button>
+            <p className="text-[#ccc] text-[18px] m-0">Score : {score.toLocaleString()}</p>
+            <p className="text-[#888] text-[14px] m-0">Trop de flèches ratées…</p>
+            <button 
+              className="mt-2 py-3 px-9 text-[18px] font-bold bg-[#7C3AED] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-transform active:scale-95" 
+              onClick={startGame}
+            >
+              RECOMMENCER
+            </button>
           </div>
         )}
 
         {/* ── Screen: win ── */}
         {gameState === 'win' && (
-          <div style={s.overlay}>
-            <h2 style={{ color: '#FFD700', fontSize: 38, margin: 0, textShadow: '0 0 20px #FFD700' }}>
+          <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-[100] gap-3.5">
+            <h2 className="text-[#FFD700] text-[38px] m-0 [text-shadow:0_0_20px_#FFD700]">
               VICTOIRE !
             </h2>
-            <p style={{ color: '#ccc', fontSize: 18 }}>Score : {score.toLocaleString()}</p>
-            <p style={{ color: '#aaa', fontSize: 14 }}>Tu as survécu aux 2 minutes !</p>
-            <div style={s.secretBox}>
-              <p style={{ color: '#aaa', fontSize: 13, margin: '0 0 8px' }}>Lettre secrète :</p>
-              <span style={s.secretLetter}>{SECRET_LETTER}</span>
+            <p className="text-[#ccc] text-[18px] m-0">Score : {score.toLocaleString()}</p>
+            <p className="text-[#aaa] text-[14px] m-0">Tu as survécu aux 2 minutes !</p>
+            <div className="border-2 border-[#FFD700] rounded-[14px] py-3.5 px-9 text-center shadow-[0_0_24px_rgba(255,215,0,0.3)] mt-2">
+              <p className="text-[#aaa] text-[13px] m-0 mb-2">Lettre secrète :</p>
+              <span className="text-[#FFD700] text-[72px] font-bold [text-shadow:0_0_24px_#FFD700] block leading-none">
+                {SECRET_LETTER}
+              </span>
             </div>
-            <button style={{ ...s.btn, marginTop: 16 }} onClick={startGame}>REJOUER</button>
+            <button 
+              className="mt-4 py-3 px-9 text-[18px] font-bold bg-[#7C3AED] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-transform active:scale-95" 
+              onClick={startGame}
+            >
+              REJOUER
+            </button>
           </div>
         )}
 
@@ -434,188 +481,3 @@ export default function RhythmGame() {
     </div>
   );
 }
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-const s = {
-  root: {
-    display:         'flex',
-    justifyContent:  'center',
-    alignItems:      'center',
-    minHeight:       '100vh',
-    backgroundColor: '#080810',
-    fontFamily:      'Segoe UI, monospace',
-  },
-  game: {
-    position:     'relative',
-    width:        GAME_WIDTH,
-    height:       GAME_HEIGHT,
-    background:   'linear-gradient(180deg, #0d0d1f 0%, #0a0a18 100%)',
-    border:       '2px solid #222',
-    borderRadius: 10,
-    overflow:     'hidden',
-    boxShadow:    '0 0 50px rgba(100,0,255,0.25)',
-  },
-  hud: {
-    position:        'absolute',
-    top: 0, left: 0, right: 0,
-    display:         'flex',
-    justifyContent:  'space-between',
-    alignItems:      'center',
-    padding:         '8px 14px',
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    zIndex:          20,
-  },
-  hudItem: {
-    color:    '#ddd',
-    fontSize: 13,
-  },
-  comboBanner: {
-    position:   'absolute',
-    top:        36,
-    left:       '50%',
-    transform:  'translateX(-50%)',
-    color:      '#FFD700',
-    fontSize:   15,
-    fontWeight: 'bold',
-    textShadow: '0 0 10px #FFD700',
-    zIndex:     15,
-    whiteSpace: 'nowrap',
-  },
-  graceBanner: {
-    position:   'absolute',
-    top:        '40%',
-    left:       '50%',
-    transform:  'translate(-50%, -50%)',
-    color:      '#A855F7',
-    fontSize:   32,
-    fontWeight: 'bold',
-    textShadow: '0 0 20px #A855F7',
-    zIndex:     15,
-    whiteSpace: 'nowrap',
-    letterSpacing: 4,
-  },
-  laneRow: {
-    position: 'absolute',
-    inset:    0,
-    display:  'flex',
-  },
-  lane: {
-    flex: 1,
-  },
-  hitLine: {
-    position:        'absolute',
-    left:            0,
-    right:           0,
-    height:          2,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    zIndex:          5,
-  },
-  receptor: {
-    position:       'absolute',
-    width:          ARROW_SIZE,
-    height:         ARROW_SIZE,
-    border:         '2px solid',
-    borderRadius:   8,
-    display:        'flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    zIndex:         10,
-    transition:     'box-shadow 0.05s, background-color 0.05s',
-  },
-  feedback: {
-    position:      'absolute',
-    top:           RECEPTOR_Y - 90,
-    transform:     'translateX(-50%)',
-    fontSize:      15,
-    fontWeight:    'bold',
-    pointerEvents: 'none',
-    zIndex:        25,
-    textShadow:    '0 0 8px currentColor',
-    whiteSpace:    'nowrap',
-    letterSpacing: 1,
-  },
-  keyLegend: {
-    position:      'absolute',
-    bottom:        14,
-    right:         14,
-    display:       'flex',
-    flexDirection: 'column',
-    gap:           4,
-    zIndex:        15,
-  },
-  keyRow: {
-    display: 'flex',
-    gap:     6,
-  },
-  keyCap: {
-    width:           26,
-    height:          26,
-    border:          '2px solid',
-    borderRadius:    5,
-    display:         'flex',
-    alignItems:      'center',
-    justifyContent:  'center',
-    fontSize:        12,
-    fontWeight:      'bold',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  overlay: {
-    position:        'absolute',
-    inset:           0,
-    backgroundColor: 'rgba(0,0,0,0.88)',
-    display:         'flex',
-    flexDirection:   'column',
-    alignItems:      'center',
-    justifyContent:  'center',
-    zIndex:          100,
-    gap:             14,
-  },
-  bigTitle: {
-    color:         '#A855F7',
-    fontSize:      44,
-    fontWeight:    'bold',
-    margin:        0,
-    textShadow:    '0 0 25px #A855F7',
-    letterSpacing: 5,
-  },
-  sub: {
-    color:     '#ccc',
-    fontSize:  15,
-    margin:    0,
-    textAlign: 'center',
-    padding:   '0 20px',
-  },
-  keyHint: {
-    display:   'flex',
-    gap:       20,
-    marginTop: 4,
-  },
-  btn: {
-    marginTop:       8,
-    padding:         '12px 36px',
-    fontSize:        18,
-    fontWeight:      'bold',
-    backgroundColor: '#7C3AED',
-    color:           '#fff',
-    border:          'none',
-    borderRadius:    8,
-    cursor:          'pointer',
-    letterSpacing:   2,
-    boxShadow:       '0 0 20px rgba(124,58,237,0.5)',
-  },
-  secretBox: {
-    border:       '2px solid #FFD700',
-    borderRadius: 14,
-    padding:      '14px 36px',
-    textAlign:    'center',
-    boxShadow:    '0 0 24px rgba(255,215,0,0.3)',
-  },
-  secretLetter: {
-    color:      '#FFD700',
-    fontSize:   72,
-    fontWeight: 'bold',
-    textShadow: '0 0 24px #FFD700',
-    display:    'block',
-    lineHeight: 1,
-  },
-};

@@ -1,834 +1,450 @@
-/**
- * <memory-game> — Composant Web autonome
- * Usage : <memory-game></memory-game>
- *
- * Attributs configurables :
- *   total-pairs   : nombre de paires (défaut: 12)
- *   max-moves     : essais max avant reset (défaut: 15)
- *   secret-emoji  : emoji de la paire secrète (défaut: 🦊)
- *   secret-letter : lettre du code secret (défaut: Z)
- */
-class MemoryGame extends HTMLElement {
+'use client';
 
-  // ─── OBSERVED ATTRIBUTES ────────────────────────────────────────────────────
-  static get observedAttributes() {
-    return ['total-pairs', 'max-moves', 'secret-emoji', 'secret-letter'];
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const EMOJIS = ['🐬','🌵','🍄','🎸','🚀','🦋','🍕','🎲','🌙','🐙',
+                '🦁','🍉','⚡','🌺','🦄','🐉','🎪','🍦','🎵','🧩'];
+
+const JOKES = [
+  {
+    setup: "Pourquoi les plongeurs plongent-ils toujours en arrière ?",
+    punchline: "Parce que s'ils plongeaient en avant, ils tomberaient dans le bateau !"
   }
+];
 
-  attributeChangedCallback() {
-    if (this._initialized) this._newGame();
-  }
-
-  // ─── CONFIG ─────────────────────────────────────────────────────────────────
-  get totalPairs()    { return parseInt(this.getAttribute('total-pairs')   || 12); }
-  get maxMoves()      { return parseInt(this.getAttribute('max-moves')     || 15); }
-  get secretEmoji()   { return this.getAttribute('secret-emoji')           || '🦊'; }
-  get secretLetter()  { return (this.getAttribute('secret-letter')         || 'Z').toUpperCase(); }
-
-  static EMOJIS = ['🐬','🌵','🍄','🎸','🚀','🦋','🍕','🎲','🌙','🐙',
-                   '🦁','🍉','⚡','🌺','🦄','🐉','🎪','🍦','🎵','🧩'];
-
-  static JOKES = [
-    {
-      setup: "Pourquoi les plongeurs plongent-ils toujours en arrière ?",
-      punchline: "Parce que s'ils plongeaient en avant, ils tomberaient dans le bateau !"
-    }
-  ];
-
-  // ─── LIFECYCLE ──────────────────────────────────────────────────────────────
-  connectedCallback() {
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.innerHTML = this._template();
-    this._bindRefs();
-    this._state = this._freshState();
-    this._newGame();
-    this._initialized = true;
-  }
-
-  disconnectedCallback() {
-    clearInterval(this._state?.timerInterval);
-  }
-
-  // ─── STATE ──────────────────────────────────────────────────────────────────
-  _freshState() {
-    return {
-      cards: [],
-      flipped: [],
-      matched: 0,
-      moves: 0,
-      locked: false,
-      secretFound: false,
-      startTime: null,
-      timerInterval: null,
-    };
-  }
-
-  // ─── TEMPLATE ───────────────────────────────────────────────────────────────
-  _template() {
-    return `
-<style>
-  :host {
-    --bg: #2e2e2e;
-    --ink: #ffffff;
-    --card-back: #fff;
-    --card-front: #3a3a3a;
-    --card-border: #ffffff;
-    --accent: #c0392b;
-    --accent2: #e67e22;
-    --gold: #d4a843;
-    --muted: #888888;
-    --radius: 10px;
-    --flip-dur: 0.5s;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-family: 'DM Mono', 'Courier New', monospace;
-    background: var(--bg);
-    color: var(--ink);
-    padding: 2.5rem 1rem 4rem;
-    min-height: 100vh;
-    box-sizing: border-box;
-  }
-
+const styles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  .font-dm-serif { font-family: 'DM Serif Display', Georgia, serif; }
+  .font-dm-mono { font-family: 'DM Mono', 'Courier New', monospace; }
 
-  /* ── HEADER ── */
-  header { text-align: center; margin-bottom: 0.5rem; }
-
-  .label-top {
-    font-size: 0.65rem;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.4rem;
-  }
-
-  h1 {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: clamp(2.8rem, 7vw, 5rem);
-    letter-spacing: -2px;
-    line-height: 1;
-    color: #fff;
-  }
-
-  h1 .accent { color: var(--accent); font-style: italic; }
-
-  .tagline {
-    font-size: 0.7rem;
-    letter-spacing: 3px;
-    color: var(--muted);
-    margin-top: 0.5rem;
-    text-transform: uppercase;
-  }
-
-  hr.deco {
-    width: 60px;
-    border: none;
-    border-top: 2px solid #444;
-    margin: 1.2rem auto;
-  }
-
-  /* ── STATS ── */
-  .stats {
-    display: flex;
-    gap: 2.5rem;
-    margin-bottom: 1.8rem;
-    align-items: center;
-  }
-
-  .stat { display: flex; flex-direction: column; align-items: center; }
-
-  .stat-value {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 2rem;
-    color: #fff;
-    line-height: 1;
-    transition: transform 0.15s, color 0.2s;
-  }
-
-  .stat-value.bump  { transform: scale(1.35); color: var(--accent); }
-  .stat-value.danger { color: var(--accent) !important; }
-
-  .stat-label {
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 0.2rem;
-  }
-
-  .stat-sep { color: #444; font-size: 1.5rem; }
-
-  /* ── SECRET ZONE ── */
-  .secret-zone {
-    background: #111;
-    color: #fff;
-    border-radius: 10px;
-    padding: 0.9rem 2rem;
-    margin-bottom: 1.8rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    min-width: 260px;
-    transition: outline 0.2s;
-  }
-
-  .secret-zone::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(45deg, transparent, transparent 6px,
-      rgba(255,255,255,0.02) 6px, rgba(255,255,255,0.02) 12px);
-  }
-
-  .secret-label {
-    font-size: 0.6rem;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-    margin-bottom: 0.5rem;
-  }
-
-  .secret-letter-display {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 3rem;
-    color: #fff;
-    min-width: 50px;
-    display: inline-block;
-    text-align: center;
-  }
-
-  .secret-letter-display.hidden-state { color: rgba(255,255,255,0.15); }
-
-  @keyframes revealLetter {
-    0%   { transform: scale(0.3) rotate(-20deg); opacity: 0; }
-    60%  { transform: scale(1.3) rotate(5deg); }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; color: #fff; }
-  }
-
-  .secret-letter-display.revealed {
-    animation: revealLetter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  }
-
-  .secret-hint {
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.3);
-    margin-top: 0.3rem;
-  }
-
-  /* ── GRID ── */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.8rem;
-    max-width: 460px;
-    width: 100%;
-    margin-bottom: 1.5rem;
-  }
-
-  /* ── CARD ── */
-  .card {
-    aspect-ratio: 1;
-    cursor: pointer;
-    perspective: 700px;
-  }
-
+  /* Utilities for 3D card flip */
+  .perspective-700 { perspective: 700px; }
+  .preserve-3d { transform-style: preserve-3d; }
+  .backface-hidden { backface-visibility: hidden; }
+  
   .card-inner {
-    width: 100%; height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform var(--flip-dur) cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: var(--radius);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
+  
   .card.flipped .card-inner,
   .card.matched .card-inner { transform: rotateY(180deg); }
-
-  .card-face {
-    position: absolute; inset: 0;
-    border-radius: var(--radius);
-    backface-visibility: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-  }
-
-  .card-back-face {
-    background: var(--card-back);
-    border: 2px solid var(--card-border);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .card-back-face::before {
-    content: '';
-    position: absolute; inset: 4px;
-    border: 1px solid rgba(0,0,0,0.15);
-    border-radius: 6px;
-  }
-
-  .card-back-face::after {
-    content: '✦';
-    font-size: 1.1rem;
-    color: rgba(0,0,0,0.25);
-  }
-
-  .card-front-face {
-    background: var(--card-front);
-    border: 2px solid var(--card-border);
-    transform: rotateY(180deg);
-    font-size: clamp(1.8rem, 4.5vw, 2.4rem);
-    flex-direction: column;
-  }
-
-  .card.matched .card-front-face {
-    border-color: var(--gold);
-    box-shadow: 0 0 14px rgba(212,168,67,0.25);
-  }
-
-  .card.secret-card.matched .card-front-face {
-    border-color: var(--accent);
-    box-shadow: 0 0 20px rgba(192,57,43,0.3);
-  }
-
+  
   .card:not(.flipped):not(.matched):hover .card-inner {
     transform: rotateY(6deg) translateY(-3px);
   }
 
+  .card-front-face { transform: rotateY(180deg); }
+
+  /* Animations */
   @keyframes matchPop {
     0%   { transform: rotateY(180deg) scale(1); }
     35%  { transform: rotateY(180deg) scale(1.12); }
     65%  { transform: rotateY(180deg) scale(0.96); }
     100% { transform: rotateY(180deg) scale(1); }
   }
+  .card.matched .card-inner { animation: matchPop 0.4s ease 0.1s both; }
 
-  .card.matched .card-inner {
-    animation: matchPop 0.4s ease 0.1s both;
+  @keyframes revealLetter {
+    0%   { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+    60%  { transform: scale(1.3) rotate(5deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; color: #fff; }
   }
-
-  /* ── BUTTONS ── */
-  .btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    border-radius: 8px;
-    padding: 0.65rem 1.8rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    border: 2px solid #fff;
-    background: transparent;
-    color: #fff;
-  }
-
-  .btn:hover { background: #fff; color: #000; }
-  .btn:active { transform: scale(0.97); }
-
-  .btn-accent {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-
-  .btn-accent:hover { background: #a93226; border-color: #a93226; }
-
-  /* ── OVERLAYS ── */
-  .overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.95);
-    z-index: 100;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-    backdrop-filter: blur(4px);
-  }
-
-  .overlay.show { display: flex; }
+  .animate-reveal { animation: revealLetter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(30px); }
     to   { opacity: 1; transform: none; }
   }
-
-  .win-box {
-    text-align: center;
-    animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    max-width: 400px;
-    padding: 1rem;
-  }
-
-  .win-title {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: clamp(2.5rem, 7vw, 4rem);
-    letter-spacing: -1px;
-    color: #fff;
-  }
-
-  .win-title .it { font-style: italic; color: var(--accent); }
-
-  .win-sub {
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-top: 0.5rem;
-  }
-
-  hr.deco2 { width: 40px; border: none; border-top: 2px solid #333; margin: 1.2rem auto; }
-
-  .code-input-zone { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; }
-
-  .code-label {
-    font-size: 0.65rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .code-input {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 2.5rem;
-    width: 80px;
-    text-align: center;
-    background: #111;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 0.3rem 0.5rem;
-    outline: none;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    transition: background 0.2s;
-  }
-
-  .code-input::placeholder { color: rgba(255,255,255,0.2); }
-  .code-input.wrong-flash  { background: #7b241c; }
-
-  .code-feedback {
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    color: var(--muted);
-    min-height: 1.2rem;
-    transition: color 0.2s;
-  }
-
-  .code-feedback.wrong { color: var(--accent); }
-  .code-feedback.right { color: #27ae60; }
-
-  /* Fail overlay */
-  .fail-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.96);
-    z-index: 150;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    text-align: center;
-    padding: 2rem;
-    backdrop-filter: blur(6px);
-  }
-
-  .fail-overlay.show { display: flex; }
+  .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
   @keyframes shakeIn {
     0%   { transform: scale(0.8) rotate(-3deg); opacity: 0; }
     50%  { transform: scale(1.05) rotate(2deg); }
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
   }
-
-  .fail-box { animation: shakeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-
-  .fail-emoji { font-size: 3.5rem; display: block; margin-bottom: 0.5rem; }
-
-  .fail-title {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: clamp(2rem, 6vw, 3.5rem);
-    color: var(--accent);
-    font-style: italic;
-    letter-spacing: -1px;
-  }
-
-  .fail-sub {
-    font-size: 0.7rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 0.4rem;
-  }
-
-  /* Secret overlay */
-  .secret-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: var(--accent);
-    z-index: 200;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    color: #fff;
-    text-align: center;
-    padding: 2rem;
-  }
-
-  .secret-overlay.show { display: flex; }
+  .animate-shake-in { animation: shakeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
   @keyframes secretIn {
     from { opacity: 0; transform: scale(0.7) rotate(-5deg); }
     to   { opacity: 1; transform: scale(1) rotate(0deg); }
   }
-
-  .secret-message-box { animation: secretIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-
-  .secret-badge {
-    font-size: 0.65rem;
-    letter-spacing: 5px;
-    text-transform: uppercase;
-    opacity: 0.7;
-    margin-bottom: 1rem;
-  }
-
-  .secret-joke {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: clamp(1.6rem, 5vw, 2.8rem);
-    line-height: 1.25;
-    max-width: 500px;
-    font-style: italic;
-  }
-
-  .secret-punchline {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: clamp(1rem, 3vw, 1.6rem);
-    opacity: 0.85;
-    margin-top: 0.5rem;
-  }
+  .animate-secret-in { animation: secretIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
   @keyframes spin360 {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
   }
+  .animate-spin-360 { animation: spin360 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
-  .secret-emoji {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 1rem;
-    animation: spin360 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  .bg-secret-pattern {
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.02) 6px, rgba(255,255,255,0.02) 12px);
   }
-</style>
+`;
 
-<!-- ── HTML ── -->
-<header>
-  <p class="label-top">✦ Jeu de concentration ✦</p>
-  <h1>MÉ<span class="accent">MOIRE</span></h1>
-  <p class="tagline">Un secret se cache ici</p>
-</header>
-
-<hr class="deco">
-
-<div class="stats">
-  <div class="stat">
-    <span class="stat-value" id="moves">0</span>
-    <span class="stat-label">Essais</span>
-  </div>
-  <span class="stat-sep">·</span>
-  <div class="stat">
-    <span class="stat-value" id="pairs">0</span>
-    <span class="stat-label">Paires</span>
-  </div>
-  <span class="stat-sep">·</span>
-  <div class="stat">
-    <span class="stat-value" id="timer">0s</span>
-    <span class="stat-label">Temps</span>
-  </div>
-</div>
-
-<div class="secret-zone" id="secretZone">
-  <div class="secret-label">▲ Code Secret ▲</div>
-  <span class="secret-letter-display hidden-state" id="secretDisplay">?</span>
-  <div class="secret-hint" id="secretHint">Trouvez la paire mystère…</div>
-</div>
-
-<div class="grid" id="grid"></div>
-
-<button class="btn" id="restartBtn">↺ Recommencer</button>
-
-<!-- Win overlay -->
-<div class="overlay" id="winOverlay">
-  <div class="win-box">
-    <div class="win-title">Bien <span class="it">joué !</span></div>
-    <div class="win-sub" id="winStats"></div>
-    <hr class="deco2">
-    <div class="code-input-zone">
-      <div class="code-label">Entrez le code secret</div>
-      <input class="code-input" id="codeInput" maxlength="1" placeholder="?" autocomplete="off" spellcheck="false">
-      <div class="code-feedback" id="codeFeedback">Une seule lettre…</div>
-      <button class="btn btn-accent" id="validateBtn">Valider</button>
-    </div>
-    <br>
-    <button class="btn" id="replayBtn">Rejouer</button>
-  </div>
-</div>
-
-<!-- Fail overlay -->
-<div class="fail-overlay" id="failOverlay">
-  <div class="fail-box">
-    <span class="fail-emoji">💥</span>
-    <div class="fail-title">Trop d'essais !</div>
-    <div class="fail-sub">Plus de ${this.maxMoves} essais — on repart de zéro</div>
-  </div>
-  <br>
-  <button class="btn btn-accent" id="failRestartBtn">Recommencer</button>
-</div>
-
-<!-- Secret overlay -->
-<div class="secret-overlay" id="secretOverlay">
-  <div class="secret-message-box">
-    <span class="secret-emoji">🔓</span>
-    <div class="secret-badge">✦ Code correct ✦</div>
-    <div class="secret-joke" id="jokeSetup"></div>
-    <div class="secret-punchline" id="jokePunchline"></div>
-  </div>
-  <br>
-  <button class="btn" style="border-color:#fff;color:#fff;" id="secretReplayBtn">Rejouer</button>
-</div>
-    `;
+function shuffle(array) {
+  let currentIndex = array.length, randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
   }
+  return array;
+}
 
-  // ─── BIND REFS ──────────────────────────────────────────────────────────────
-  _bindRefs() {
-    const $ = id => this.shadowRoot.getElementById(id);
+export default function MemoryGame({ 
+  totalPairs = 12, 
+  maxMoves = 15, 
+  secretEmoji = '🦊', 
+  secretLetter = 'Z' 
+}) {
+  const [cards, setCards] = useState([]);
+  const [flippedIndices, setFlippedIndices] = useState([]);
+  const [matchedPairs, setMatchedPairs] = useState(0);
+  const [moves, setMoves] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [secretFound, setSecretFound] = useState(false);
+  const [time, setTime] = useState(0);
+  const [gameStatus, setGameStatus] = useState('playing'); // 'playing', 'won', 'failed', 'secret'
+  
+  const [codeInput, setCodeInput] = useState('');
+  const [codeFeedback, setCodeFeedback] = useState({ text: 'Une seule lettre…', status: 'idle' });
+  const [bumpStats, setBumpStats] = useState({ moves: false, pairs: false });
+  const [joke, setJoke] = useState(JOKES[0]);
 
-    this._refs = {
-      grid:           $('grid'),
-      moves:          $('moves'),
-      pairs:          $('pairs'),
-      timer:          $('timer'),
-      secretZone:     $('secretZone'),
-      secretDisplay:  $('secretDisplay'),
-      secretHint:     $('secretHint'),
-      winOverlay:     $('winOverlay'),
-      winStats:       $('winStats'),
-      codeInput:      $('codeInput'),
-      codeFeedback:   $('codeFeedback'),
-      failOverlay:    $('failOverlay'),
-      secretOverlay:  $('secretOverlay'),
-      jokeSetup:      $('jokeSetup'),
-      jokePunchline:  $('jokePunchline'),
-    };
+  const timerRef = useRef(null);
+  const startTimeRef = useRef(null);
+  const normalizedSecretLetter = secretLetter.toUpperCase();
 
-    $('restartBtn').addEventListener('click', () => this._newGame());
-    $('validateBtn').addEventListener('click', () => this._checkCode());
-    $('replayBtn').addEventListener('click', () => {
-      this._refs.winOverlay.classList.remove('show');
-      this._newGame();
-    });
-    $('failRestartBtn').addEventListener('click', () => {
-      this._refs.failOverlay.classList.remove('show');
-      this._newGame();
-    });
-    $('secretReplayBtn').addEventListener('click', () => {
-      this._refs.secretOverlay.classList.remove('show');
-      this._refs.winOverlay.classList.remove('show');
-      this._newGame();
-    });
-    this._refs.codeInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') this._checkCode();
-    });
-  }
+  // Initialize Game
+  const startNewGame = useCallback(() => {
+    clearInterval(timerRef.current);
+    timerRef.current = null;
+    startTimeRef.current = null;
+    
+    // Build deck
+    const pool = EMOJIS.filter(e => e !== secretEmoji);
+    const chosen = shuffle([...pool]).slice(0, totalPairs - 1);
+    chosen.push(secretEmoji);
+    const newDeck = shuffle([...chosen, ...chosen]).map((emoji, index) => ({
+      id: index,
+      emoji,
+      isFlipped: false,
+      isMatched: false,
+      isSecret: emoji === secretEmoji
+    }));
 
-  // ─── NEW GAME ───────────────────────────────────────────────────────────────
-  _newGame() {
-    clearInterval(this._state?.timerInterval);
-    this._state = this._freshState();
+    setCards(newDeck);
+    setFlippedIndices([]);
+    setMatchedPairs(0);
+    setMoves(0);
+    setIsLocked(false);
+    setSecretFound(false);
+    setTime(0);
+    setGameStatus('playing');
+    setCodeInput('');
+    setCodeFeedback({ text: 'Une seule lettre…', status: 'idle' });
+    setJoke(JOKES[Math.floor(Math.random() * JOKES.length)]);
+  }, [totalPairs, secretEmoji]);
 
-    const r = this._refs;
-    r.moves.textContent = '0';
-    r.moves.classList.remove('danger', 'bump');
-    r.pairs.textContent = '0';
-    r.timer.textContent = '0s';
-    r.secretDisplay.textContent = '?';
-    r.secretDisplay.className = 'secret-letter-display hidden-state';
-    r.secretHint.textContent = 'Trouvez la paire mystère…';
-    r.secretZone.style.outline = '';
-    r.winOverlay.classList.remove('show');
-    r.failOverlay.classList.remove('show');
-    r.secretOverlay.classList.remove('show');
-    r.codeInput.value = '';
-    r.codeFeedback.textContent = 'Une seule lettre…';
-    r.codeFeedback.className = 'code-feedback';
+  useEffect(() => {
+    startNewGame();
+    return () => clearInterval(timerRef.current);
+  }, [startNewGame]);
 
-    this._buildDeck();
-    this._renderGrid();
-  }
+  // Handle Card Flip
+  const handleCardClick = (index) => {
+    if (isLocked || gameStatus !== 'playing') return;
+    if (cards[index].isFlipped || cards[index].isMatched) return;
 
-  // ─── DECK ───────────────────────────────────────────────────────────────────
-  _buildDeck() {
-    const pool = MemoryGame.EMOJIS.filter(e => e !== this.secretEmoji);
-    const chosen = this._shuffle(pool).slice(0, this.totalPairs - 1);
-    chosen.push(this.secretEmoji);
-    this._state.cards = this._shuffle([...chosen, ...chosen]);
-  }
-
-  // ─── RENDER ─────────────────────────────────────────────────────────────────
-  _renderGrid() {
-    const grid = this._refs.grid;
-    grid.innerHTML = '';
-
-    this._state.cards.forEach((emoji, i) => {
-      const card = document.createElement('div');
-      card.className = 'card' + (emoji === this.secretEmoji ? ' secret-card' : '');
-      card.dataset.index = i;
-      card.innerHTML = `
-        <div class="card-inner">
-          <div class="card-face card-back-face"></div>
-          <div class="card-face card-front-face">${emoji}</div>
-        </div>`;
-      card.addEventListener('click', () => this._flipCard(card, i));
-      grid.appendChild(card);
-    });
-  }
-
-  // ─── FLIP ───────────────────────────────────────────────────────────────────
-  _flipCard(el, idx) {
-    const s = this._state;
-    if (s.locked) return;
-    if (el.classList.contains('flipped') || el.classList.contains('matched')) return;
-
-    // Start timer
-    if (!s.startTime) {
-      s.startTime = Date.now();
-      s.timerInterval = setInterval(() => {
-        const secs = Math.floor((Date.now() - s.startTime) / 1000);
-        this._refs.timer.textContent = secs + 's';
+    // Start timer on first interaction
+    if (!startTimeRef.current) {
+      startTimeRef.current = Date.now();
+      timerRef.current = setInterval(() => {
+        setTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
       }, 500);
     }
 
-    el.classList.add('flipped');
-    s.flipped.push({ el, idx });
+    const newCards = [...cards];
+    newCards[index].isFlipped = true;
+    setCards(newCards);
 
-    if (s.flipped.length === 2) {
-      s.locked = true;
-      s.moves++;
-      this._bump('moves');
-      this._refs.moves.textContent = s.moves;
+    const newFlippedIndices = [...flippedIndices, index];
+    setFlippedIndices(newFlippedIndices);
 
-      // Warning color
-      if (s.moves >= this.maxMoves - 2) this._refs.moves.classList.add('danger');
+    if (newFlippedIndices.length === 2) {
+      setIsLocked(true);
+      const newMoves = moves + 1;
+      setMoves(newMoves);
+      triggerBump('moves');
 
-      // Too many moves
-      if (s.moves > this.maxMoves) {
-        setTimeout(() => this._refs.failOverlay.classList.add('show'), 700);
+      if (newMoves > maxMoves) {
+        setTimeout(() => setGameStatus('failed'), 700);
         return;
       }
 
-      const [a, b] = s.flipped;
-      if (s.cards[a.idx] === s.cards[b.idx]) {
+      const [firstIndex, secondIndex] = newFlippedIndices;
+      
+      // Match found
+      if (newCards[firstIndex].emoji === newCards[secondIndex].emoji) {
         setTimeout(() => {
-          a.el.classList.add('matched');
-          b.el.classList.add('matched');
-          a.el.classList.remove('flipped');
-          b.el.classList.remove('flipped');
-          s.matched++;
-          this._bump('pairs');
-          this._refs.pairs.textContent = s.matched;
+          setCards(prev => {
+            const matchedCards = [...prev];
+            matchedCards[firstIndex].isMatched = true;
+            matchedCards[secondIndex].isMatched = true;
+            matchedCards[firstIndex].isFlipped = false;
+            matchedCards[secondIndex].isFlipped = false;
+            return matchedCards;
+          });
+          
+          setMatchedPairs(prev => {
+            const newPairs = prev + 1;
+            triggerBump('pairs');
+            if (newPairs === totalPairs) {
+              setTimeout(() => {
+                clearInterval(timerRef.current);
+                setGameStatus('won');
+              }, 500);
+            }
+            return newPairs;
+          });
 
-          if (s.cards[a.idx] === this.secretEmoji && !s.secretFound) {
-            s.secretFound = true;
-            this._revealLetter();
+          if (newCards[firstIndex].isSecret && !secretFound) {
+            setSecretFound(true);
           }
 
-          s.flipped = [];
-          s.locked = false;
-          if (s.matched === this.totalPairs) setTimeout(() => this._winGame(), 500);
+          setFlippedIndices([]);
+          setIsLocked(false);
         }, 400);
       } else {
+        // No match
         setTimeout(() => {
-          a.el.classList.remove('flipped');
-          b.el.classList.remove('flipped');
-          s.flipped = [];
-          s.locked = false;
+          setCards(prev => {
+            const unflippedCards = [...prev];
+            unflippedCards[firstIndex].isFlipped = false;
+            unflippedCards[secondIndex].isFlipped = false;
+            return unflippedCards;
+          });
+          setFlippedIndices([]);
+          setIsLocked(false);
         }, 900);
       }
     }
-  }
+  };
 
-  // ─── REVEAL LETTER ──────────────────────────────────────────────────────────
-  _revealLetter() {
-    const disp = this._refs.secretDisplay;
-    disp.textContent = this.secretLetter;
-    disp.className = 'secret-letter-display revealed';
-    this._refs.secretHint.textContent = '✦ Notez bien cette lettre ! ✦';
+  const triggerBump = (stat) => {
+    setBumpStats(prev => ({ ...prev, [stat]: true }));
+    setTimeout(() => setBumpStats(prev => ({ ...prev, [stat]: false })), 150);
+  };
 
-    const zone = this._refs.secretZone;
-    zone.style.outline = '3px solid #c0392b';
-    setTimeout(() => { zone.style.outline = ''; }, 1500);
-  }
-
-  // ─── WIN ────────────────────────────────────────────────────────────────────
-  _winGame() {
-    clearInterval(this._state.timerInterval);
-    const secs = Math.floor((Date.now() - this._state.startTime) / 1000);
-    this._refs.winStats.textContent =
-      `${this._state.moves} essais · ${secs}s · ${this.totalPairs} paires`;
-
-    if (!this._state.secretFound)
-      this._refs.secretHint.textContent = '(paire mystère non trouvée…)';
-
-    this._refs.winOverlay.classList.add('show');
-    setTimeout(() => this._refs.codeInput.focus(), 300);
-  }
-
-  // ─── CHECK CODE ─────────────────────────────────────────────────────────────
-  _checkCode() {
-    const input    = this._refs.codeInput.value.trim().toUpperCase();
-    const feedback = this._refs.codeFeedback;
-
+  const checkCode = () => {
+    const input = codeInput.trim().toUpperCase();
     if (!input) {
-      feedback.textContent = "Entre une lettre d'abord !";
-      feedback.className = 'code-feedback wrong';
+      setCodeFeedback({ text: "Entre une lettre d'abord !", status: 'wrong' });
       return;
     }
 
-    if (input === this.secretLetter) {
-      feedback.textContent = '✦ Correct ! ✦';
-      feedback.className = 'code-feedback right';
-      setTimeout(() => this._showSecret(), 600);
+    if (input === normalizedSecretLetter) {
+      setCodeFeedback({ text: '✦ Correct ! ✦', status: 'right' });
+      setTimeout(() => setGameStatus('secret'), 600);
     } else {
-      feedback.textContent = 'Mauvaise lettre… cherche encore !';
-      feedback.className = 'code-feedback wrong';
-      this._refs.codeInput.value = '';
-      this._refs.codeInput.classList.add('wrong-flash');
-      setTimeout(() => this._refs.codeInput.classList.remove('wrong-flash'), 400);
+      setCodeFeedback({ text: 'Mauvaise lettre… cherche encore !', status: 'wrong' });
+      setCodeInput('');
+      // Flash effect could be added here
     }
-  }
+  };
 
-  // ─── SHOW SECRET ────────────────────────────────────────────────────────────
-  _showSecret() {
-    const joke = MemoryGame.JOKES[Math.floor(Math.random() * MemoryGame.JOKES.length)];
-    this._refs.jokeSetup.textContent    = joke.setup;
-    this._refs.jokePunchline.textContent = joke.punchline;
-    this._refs.secretOverlay.classList.add('show');
-  }
+  return (
+    <>
+      <style>{styles}</style>
+      <div className="flex flex-col items-center font-dm-mono bg-[#2e2e2e] text-white py-10 px-4 min-h-screen box-border relative">
+        
+        {/* Header */}
+        <header className="text-center mb-2">
+          <p className="text-[0.65rem] tracking-[4px] uppercase text-[#888888] mb-1.5">✦ Jeu de concentration ✦</p>
+          <h1 className="font-dm-serif text-[clamp(2.8rem,7vw,5rem)] tracking-[-2px] leading-none text-white m-0">
+            MÉ<span className="text-[#c0392b] italic">MOIRE</span>
+          </h1>
+          <p className="text-[0.7rem] tracking-[3px] text-[#888888] mt-2 uppercase">Un secret se cache ici</p>
+        </header>
 
-  // ─── UTILS ──────────────────────────────────────────────────────────────────
-  _shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+        <hr className="w-[60px] border-none border-t-2 border-[#444] my-5 mx-auto" />
 
-  _bump(id) {
-    const el = this._refs[id];
-    el.classList.remove('bump');
-    void el.offsetWidth;
-    el.classList.add('bump');
-    el.addEventListener('transitionend', () => el.classList.remove('bump'), { once: true });
-  }
+        {/* Stats */}
+        <div className="flex gap-10 mb-7 items-center">
+          <div className="flex flex-col items-center">
+            <span className={`font-dm-serif text-3xl leading-none transition-all duration-150 
+              ${bumpStats.moves ? 'scale-125 text-[#c0392b]' : 'text-white'} 
+              ${moves >= maxMoves - 2 ? '!text-[#c0392b]' : ''}`}
+            >
+              {moves}
+            </span>
+            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#888888] mt-1">Essais</span>
+          </div>
+          <span className="text-[#444] text-2xl">·</span>
+          <div className="flex flex-col items-center">
+            <span className={`font-dm-serif text-3xl leading-none transition-all duration-150 text-white
+              ${bumpStats.pairs ? 'scale-125 text-[#c0392b]' : ''}`}
+            >
+              {matchedPairs}
+            </span>
+            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#888888] mt-1">Paires</span>
+          </div>
+          <span className="text-[#444] text-2xl">·</span>
+          <div className="flex flex-col items-center">
+            <span className="font-dm-serif text-3xl text-white leading-none">{time}s</span>
+            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#888888] mt-1">Temps</span>
+          </div>
+        </div>
+
+        {/* Secret Zone */}
+        <div className={`bg-[#111] text-white rounded-[10px] py-3.5 px-8 mb-7 text-center relative overflow-hidden min-w-[260px] transition-[outline] duration-200 ${secretFound ? 'outline outline-3 outline-[#c0392b]' : ''}`}>
+          <div className="absolute inset-0 bg-secret-pattern pointer-events-none"></div>
+          <div className="relative z-10 text-[0.6rem] tracking-[4px] uppercase text-white/40 mb-2">▲ Code Secret ▲</div>
+          <span className={`font-dm-serif text-5xl min-w-[50px] inline-block text-center relative z-10 
+            ${secretFound ? 'text-white animate-reveal' : 'text-white/15'}`}
+          >
+            {secretFound ? normalizedSecretLetter : '?'}
+          </span>
+          <div className="relative z-10 text-[0.6rem] tracking-[2px] text-white/30 mt-1">
+            {secretFound ? '✦ Notez bien cette lettre ! ✦' : 'Trouvez la paire mystère…'}
+          </div>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-4 gap-3 max-w-[460px] w-full mb-6">
+          {cards.map((card, index) => (
+            <div 
+              key={card.id}
+              className={`card aspect-square cursor-pointer perspective-700 
+                ${card.isFlipped ? 'flipped' : ''} 
+                ${card.isMatched ? 'matched' : ''}
+                ${card.isSecret ? 'secret-card' : ''}`}
+              onClick={() => handleCardClick(index)}
+            >
+              <div className="card-inner w-full h-full relative preserve-3d rounded-[10px]">
+                {/* Back of card (visible when face down) */}
+                <div className="card-face card-back-face absolute inset-0 rounded-[10px] backface-hidden flex items-center justify-center select-none bg-white border-2 border-white overflow-hidden">
+                   <div className="absolute inset-1 border border-black/15 rounded-md pointer-events-none"></div>
+                   <span className="text-[1.1rem] text-black/25">✦</span>
+                </div>
+                {/* Front of card (visible when flipped) */}
+                <div className={`card-face card-front-face absolute inset-0 rounded-[10px] backface-hidden flex items-center justify-center select-none bg-[#3a3a3a] border-2 
+                  ${card.isMatched && !card.isSecret ? 'border-[#d4a843] shadow-[0_0_14px_rgba(212,168,67,0.25)]' : ''}
+                  ${card.isMatched && card.isSecret ? 'border-[#c0392b] shadow-[0_0_20px_rgba(192,57,43,0.3)]' : ''}
+                  ${!card.isMatched ? 'border-white' : ''}
+                  text-[clamp(1.8rem,4.5vw,2.4rem)] flex-col`}
+                >
+                  {card.emoji}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button 
+          className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-white bg-transparent text-white hover:bg-white hover:text-black active:scale-95"
+          onClick={startNewGame}
+        >
+          ↺ Recommencer
+        </button>
+
+        {/* --- OVERLAYS --- */}
+
+        {/* Win Overlay */}
+        {gameStatus === 'won' && (
+          <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center gap-6 backdrop-blur-sm">
+            <div className="text-center animate-slide-up max-w-[400px] p-4">
+              <div className="font-dm-serif text-[clamp(2.5rem,7vw,4rem)] tracking-[-1px] text-white">
+                Bien <span className="italic text-[#c0392b]">joué !</span>
+              </div>
+              <div className="text-[0.7rem] tracking-[2px] text-[#888888] uppercase mt-2">
+                {moves} essais · {time}s · {totalPairs} paires
+              </div>
+              <div className="text-[0.6rem] text-[#888888] mt-1 italic">
+                {!secretFound && '(paire mystère non trouvée…)'}
+              </div>
+              
+              <hr className="w-[40px] border-none border-t-2 border-[#333] my-5 mx-auto" />
+              
+              <div className="flex flex-col items-center gap-3">
+                <div className="text-[0.65rem] tracking-[3px] uppercase text-[#888888]">Entrez le code secret</div>
+                <input 
+                  className="font-dm-serif text-[2.5rem] w-[80px] text-center bg-[#111] text-white border-none rounded-lg py-1 px-2 outline-none tracking-[4px] uppercase transition-colors placeholder:text-white/20"
+                  maxLength="1" 
+                  placeholder="?" 
+                  autoComplete="off" 
+                  spellCheck="false"
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && checkCode()}
+                  autoFocus
+                />
+                <div className={`text-[0.75rem] tracking-[2px] min-h-[1.2rem] transition-colors duration-200 
+                  ${codeFeedback.status === 'wrong' ? 'text-[#c0392b]' : codeFeedback.status === 'right' ? 'text-[#27ae60]' : 'text-[#888888]'}`}
+                >
+                  {codeFeedback.text}
+                </div>
+                <button 
+                  className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-[#c0392b] bg-[#c0392b] text-white hover:bg-[#a93226] hover:border-[#a93226] active:scale-95 mt-2"
+                  onClick={checkCode}
+                >
+                  Valider
+                </button>
+              </div>
+              <br />
+              <button 
+                className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-white bg-transparent text-white hover:bg-white hover:text-black active:scale-95"
+                onClick={startNewGame}
+              >
+                Rejouer
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Fail Overlay */}
+        {gameStatus === 'failed' && (
+          <div className="fixed inset-0 bg-black/95 z-[150] flex flex-col items-center justify-center gap-4 text-center p-8 backdrop-blur-md">
+            <div className="animate-shake-in">
+              <span className="text-6xl block mb-2">💥</span>
+              <div className="font-dm-serif text-[clamp(2rem,6vw,3.5rem)] text-[#c0392b] italic tracking-[-1px]">Trop d'essais !</div>
+              <div className="text-[0.7rem] tracking-[3px] uppercase text-[#888888] mt-1.5">Plus de {maxMoves} essais — on repart de zéro</div>
+            </div>
+            <br />
+            <button 
+              className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-[#c0392b] bg-[#c0392b] text-white hover:bg-[#a93226] hover:border-[#a93226] active:scale-95"
+              onClick={startNewGame}
+            >
+              Recommencer
+            </button>
+          </div>
+        )}
+
+        {/* Secret Overlay */}
+        {gameStatus === 'secret' && (
+          <div className="fixed inset-0 bg-[#c0392b] z-[200] flex flex-col items-center justify-center gap-4 text-white text-center p-8">
+            <div className="animate-secret-in flex flex-col items-center">
+              <span className="text-[3rem] block mb-4 animate-spin-360">🔓</span>
+              <div className="text-[0.65rem] tracking-[5px] uppercase opacity-70 mb-4">✦ Code correct ✦</div>
+              <div className="font-dm-serif text-[clamp(1.6rem,5vw,2.8rem)] leading-[1.25] max-w-[500px] italic">
+                {joke.setup}
+              </div>
+              <div className="font-dm-serif text-[clamp(1rem,3vw,1.6rem)] opacity-85 mt-2">
+                {joke.punchline}
+              </div>
+            </div>
+            <br />
+            <button 
+               className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-white bg-transparent text-white hover:bg-white hover:text-[#c0392b] active:scale-95 mt-4"
+              onClick={startNewGame}
+            >
+              Rejouer
+            </button>
+          </div>
+        )}
+
+      </div>
+    </>
+  );
 }
-
-// ─── REGISTER ───────────────────────────────────────────────────────────────
-customElements.define('memory-game', MemoryGame);

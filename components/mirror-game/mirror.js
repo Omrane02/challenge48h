@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const ARROWS = ['up', 'down', 'left', 'right'];
@@ -15,220 +17,11 @@ function randomSequence(len) {
   return Array.from({ length: len }, () => ARROWS[Math.floor(Math.random() * 4)]);
 }
 
-const styles = `
+// Nous gardons juste l'import des polices et l'animation keyframe spécifique
+const minimalStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap');
 
-  .ms-root {
-    background: #ffffff;
-    color: #111111;
-    font-family: 'Space Mono', monospace;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ms-root::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      repeating-linear-gradient(0deg, transparent, transparent 39px, #00000008 39px, #00000008 40px),
-      repeating-linear-gradient(90deg, transparent, transparent 39px, #00000008 39px, #00000008 40px);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .ms-container {
-    position: relative;
-    z-index: 1;
-    width: min(560px, 96vw);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-  }
-
-  .ms-header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 12px;
-    margin-bottom: 28px;
-  }
-
-  .ms-logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 42px;
-    letter-spacing: 3px;
-    color: #e00000;
-    line-height: 1;
-  }
-
-  .ms-logo span { color: #999; }
-
-  .ms-stats { display: flex; gap: 24px; }
-
-  .ms-stat { text-align: right; }
-
-  .ms-stat-label {
-    font-size: 9px;
-    color: #999;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-  }
-
-  .ms-stat-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: #111111;
-    line-height: 1.1;
-  }
-
-  .ms-stat-value.accent { color: #e00000; }
-
-  .ms-screen {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .ms-panel {
-    width: 100%;
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    padding: 28px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .ms-panel-label {
-    font-size: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: #999;
-    align-self: flex-start;
-  }
-
-  .ms-arrow-display {
-    width: 120px;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 72px;
-    border: 2px solid #e0e0e0;
-    transition: border-color 0.1s;
-  }
-
-  .ms-arrow-display.flash-up    { border-color: #111111; }
-  .ms-arrow-display.flash-down  { border-color: #e00000; }
-  .ms-arrow-display.flash-left  { border-color: #cc0000; }
-  .ms-arrow-display.flash-right { border-color: #888888; }
-
-  .ms-dots {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .ms-dot {
-    width: 10px;
-    height: 10px;
-    background: #ccc;
-    border-radius: 50%;
-    transition: background 0.15s;
-  }
-
-  .ms-dot.active { background: #e00000; }
-  .ms-dot.done   { background: #b00000; }
-
-  .ms-countdown {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px;
-    letter-spacing: 3px;
-    color: #e00000;
-  }
-
-  .ms-input-sequence {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    justify-content: center;
-    min-height: 52px;
-    align-items: center;
-  }
-
-  .ms-slot {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    border: 1px solid #e0e0e0;
-    background: #f5f5f5;
-  }
-
-  .ms-slot.correct { border-color: #888888; }
-  .ms-slot.wrong   { border-color: #cc0000; background: #fff0f0; }
-  .ms-slot.pending { border-color: #ccc; opacity: 0.3; }
-  .ms-slot.current { border-color: #e00000; }
-
-  .ms-progress-bar {
-    width: 100%;
-    height: 3px;
-    background: #e0e0e0;
-  }
-
-  .ms-progress-fill {
-    height: 100%;
-    background: #e00000;
-    transition: width 0.3s ease;
-  }
-
-  .ms-arrow-btns {
-    display: grid;
-    grid-template-columns: repeat(3, 64px);
-    grid-template-rows: repeat(3, 64px);
-    gap: 4px;
-  }
-
-  .ms-arrow-btn {
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    color: #111111;
-    font-size: 28px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.08s, border-color 0.08s, transform 0.08s;
-    user-select: none;
-  }
-
-  .ms-arrow-btn:hover  { background: #f0f0f0; border-color: #bbb; }
-  .ms-arrow-btn:active { transform: scale(0.92); }
-  .ms-btn-up    { grid-column: 2; grid-row: 1; }
-  .ms-btn-left  { grid-column: 1; grid-row: 2; }
-  .ms-btn-down  { grid-column: 2; grid-row: 2; }
-  .ms-btn-right { grid-column: 3; grid-row: 2; }
-  .ms-btn-up:hover    { border-color: #111111; }
-  .ms-btn-left:hover  { border-color: #cc0000; }
-  .ms-btn-down:hover  { border-color: #e00000; }
-  .ms-btn-right:hover { border-color: #888888; }
-
-  .ms-arrow-btns.shake {
+  .animate-shake {
     animation: ms-shake 0.35s ease;
   }
 
@@ -239,110 +32,18 @@ const styles = `
     60%     { transform: translateX(-6px); }
     80%     { transform: translateX(6px); }
   }
-
-  .ms-idle-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px;
-    letter-spacing: 4px;
-    color: #999;
-    text-align: center;
-  }
-
-  .ms-rules-list {
-    width: 100%;
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    padding: 20px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .ms-rule-item {
-    font-size: 12px;
-    color: #999;
-    display: flex;
-    gap: 10px;
-    line-height: 1.5;
-  }
-
-  .ms-rule-item::before { content: '—'; color: #e00000; flex-shrink: 0; }
-
-  .ms-best-score { font-size: 11px; color: #999; letter-spacing: 2px; }
-  .ms-best-score span { color: #e00000; }
-
-  .ms-btn-primary {
-    background: #e00000;
-    color: #ffffff;
-    border: none;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 3px;
-    padding: 14px 48px;
-    cursor: pointer;
-    width: 100%;
-    transition: background 0.1s, transform 0.1s;
-  }
-
-  .ms-btn-primary:hover  { background: #b00000; }
-  .ms-btn-primary:active { transform: scale(0.98); }
-
-  .ms-result-badge {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 72px;
-    line-height: 1;
-    letter-spacing: 4px;
-  }
-
-  .ms-result-badge.win  { color: #e00000; }
-  .ms-result-badge.fail { color: #cc0000; }
-
-  .ms-result-detail {
-    font-size: 13px;
-    color: #999;
-    text-align: center;
-    line-height: 1.8;
-  }
-
-  .ms-fragment-box {
-    margin-top: 16px;
-    padding: 12px 20px;
-    background: #fff0f0;
-    border: 1px solid #e00000;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 6px;
-    color: #e00000;
-    text-align: center;
-  }
-
-  .ms-fragment-label {
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: #999;
-    margin-top: 6px;
-    text-align: center;
-  }
-
-  .ms-hint {
-    margin-top: 8px;
-    font-size: 11px;
-    color: #999;
-    letter-spacing: 1px;
-    text-align: center;
-  }
 `;
 
 export default function MirrorSequence() {
-  const [screen, setScreen]       = useState('idle');    // idle | watch | input | result
+  const [screen, setScreen]       = useState('idle');
   const [round, setRound]         = useState(1);
   const [best, setBest]           = useState(0);
   const [sequence, setSequence]   = useState([]);
   const [inputIdx, setInputIdx]   = useState(0);
-  const [slots, setSlots]         = useState([]);        // {glyph, color, state}[]
-  const [dotStates, setDotStates] = useState([]);        // 'idle'|'active'|'done'
+  const [slots, setSlots]         = useState([]);
+  const [dotStates, setDotStates] = useState([]);
   const [countdown, setCountdown] = useState('');
-  const [arrowDisplay, setArrowDisplay] = useState({ glyph: '?', color: '#ddd', flashClass: '' });
+  const [arrowDisplay, setArrowDisplay] = useState({ glyph: '?', color: '#ddd', flashColor: '#e0e0e0' });
   const [resultBadge, setResultBadge]   = useState({ text: '', cls: '' });
   const [resultDetail, setResultDetail] = useState(null);
   const [resultBtnText, setResultBtnText] = useState('');
@@ -355,7 +56,6 @@ export default function MirrorSequence() {
   const gameOverRef = useRef(false);
   const bestRef    = useRef(0);
 
-  // Keep refs in sync
   useEffect(() => { seqRef.current = sequence; }, [sequence]);
   useEffect(() => { inputIdxRef.current = inputIdx; }, [inputIdx]);
   useEffect(() => { roundRef.current = round; }, [round]);
@@ -382,7 +82,7 @@ export default function MirrorSequence() {
   const playSequence = useCallback((seq, r) => {
     setScreen('watch');
     setDotStates(Array(seq.length).fill('idle'));
-    setArrowDisplay({ glyph: '?', color: '#ddd', flashClass: '' });
+    setArrowDisplay({ glyph: '?', color: '#ddd', flashColor: '#e0e0e0' });
     const delay = getDelay(r);
     setCountdown(`Vitesse : ${delay}ms/flèche`);
 
@@ -392,13 +92,13 @@ export default function MirrorSequence() {
       if (i < seq.length) {
         setDotStates(prev => prev.map((d, idx) => idx === i ? 'active' : d));
         const dir = seq[i];
-        setArrowDisplay({ glyph: GLYPH[dir], color: COLOR[dir], flashClass: 'flash-' + dir });
+        setArrowDisplay({ glyph: GLYPH[dir], color: COLOR[dir], flashColor: COLOR[dir] });
         setCountdown(`${seq.length - i} restante${seq.length - i > 1 ? 's' : ''}`);
         i++;
         setTimeout(showNext, delay);
       } else {
         setCountdown('À toi !');
-        setArrowDisplay({ glyph: '. . .', color: '#ccc', flashClass: '' });
+        setArrowDisplay({ glyph: '. . .', color: '#ccc', flashColor: '#e0e0e0' });
         setTimeout(() => beginInput(seq), 500);
       }
     }
@@ -450,8 +150,20 @@ export default function MirrorSequence() {
 
     const unlocked = r >= MIN_ROUND_FOR_FRAGMENT;
     const fragmentEl = unlocked
-      ? <><div className="ms-fragment-box">{PASSWORD_FRAGMENT}</div><div className="ms-fragment-label">FRAGMENT DE MOT DE PASSE DÉBLOQUÉ</div></>
-      : <div className="ms-hint">Atteins la manche 8 pour débloquer un fragment de mot de passe.</div>;
+      ? (
+        <>
+          <div className="mt-4 py-3 px-5 bg-[#fff0f0] border border-[#e00000] font-['Bebas_Neue',_sans-serif] text-[28px] tracking-[6px] text-[#e00000] text-center">
+            {PASSWORD_FRAGMENT}
+          </div>
+          <div className="text-[10px] tracking-[2px] text-[#999] mt-1.5 text-center">
+            FRAGMENT DE MOT DE PASSE DÉBLOQUÉ
+          </div>
+        </>
+      ) : (
+        <div className="mt-2 text-[11px] text-[#999] tracking-[1px] text-center">
+          Atteins la manche 8 pour débloquer un fragment de mot de passe.
+        </div>
+      );
 
     if (r === MAX_ROUNDS) {
       setResultBadge({ text: 'VICTOIRE', cls: 'win' });
@@ -475,8 +187,9 @@ export default function MirrorSequence() {
     const r = roundRef.current;
     const seq = seqRef.current;
     const hint = r < MIN_ROUND_FOR_FRAGMENT
-      ? <><br/><br/><span style={{color:'#999',fontSize:11}}>Atteins la manche 8 pour débloquer un fragment. Il te manque encore {MIN_ROUND_FOR_FRAGMENT - r} manche{MIN_ROUND_FOR_FRAGMENT - r > 1 ? 's' : ''}.</span></>
+      ? <><br/><br/><span className="text-[#999] text-[11px]">Atteins la manche 8 pour débloquer un fragment. Il te manque encore {MIN_ROUND_FOR_FRAGMENT - r} manche{MIN_ROUND_FOR_FRAGMENT - r > 1 ? 's' : ''}.</span></>
       : null;
+    
     setResultBadge({ text: 'RATÉ', cls: 'fail' });
     setResultDetail(<>Tu as atteint la manche {r} / {MAX_ROUNDS}.<br/>La séquence avait {seq.length} flèche{seq.length > 1 ? 's' : ''}.<br/><br/>La bonne séquence était :<br/>{seq.map((a, i) => <span key={i} style={{color: COLOR[a]}}>{GLYPH[a]} </span>)}{hint}</>);
     setResultBtnText('RÉESSAYER');
@@ -497,7 +210,6 @@ export default function MirrorSequence() {
     }
   }, [startRound]);
 
-  // Keyboard support
   useEffect(() => {
     const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
     const handler = (e) => {
@@ -512,92 +224,173 @@ export default function MirrorSequence() {
 
   const progress = sequence.length > 0 ? (inputIdx / sequence.length) * 100 : 0;
 
+  // Configuration des classes conditionnelles pour les slots
+  const slotStyles = {
+    correct: 'border-[#888888] bg-[#f5f5f5]',
+    wrong:   'border-[#cc0000] bg-[#fff0f0]',
+    pending: 'border-[#ccc] bg-[#f5f5f5] opacity-30',
+    current: 'border-[#e00000] bg-[#f5f5f5]'
+  };
+
   return (
     <>
-      <style>{styles}</style>
-      <div className="ms-root">
-        <div className="ms-container">
-          <header className="ms-header">
-            <div className="ms-logo">Séquence<span>//</span>Flèches</div>
-            <div className="ms-stats">
-              <div className="ms-stat">
-                <div className="ms-stat-label">Manche</div>
-                <div className="ms-stat-value accent">{round}</div>
+      <style>{minimalStyles}</style>
+      
+      <div className="bg-white text-[#111111] font-['Space_Mono',_monospace] min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+        
+        {/* Motif d'arrière-plan (grille) */}
+        <div 
+          className="fixed inset-0 pointer-events-none z-0" 
+          style={{
+            background: `
+              repeating-linear-gradient(0deg, transparent, transparent 39px, #00000008 39px, #00000008 40px),
+              repeating-linear-gradient(90deg, transparent, transparent 39px, #00000008 39px, #00000008 40px)
+            `
+          }} 
+        />
+
+        <div className="relative z-10 w-[min(560px,96vw)] flex flex-col items-center gap-0">
+          
+          <header className="w-full flex justify-between items-baseline border-b border-[#e0e0e0] pb-3 mb-7">
+            <div className="font-['Bebas_Neue',_sans-serif] text-[42px] tracking-[3px] text-[#e00000] leading-none">
+              Séquence<span className="text-[#999]">//</span>Flèches
+            </div>
+            <div className="flex gap-6">
+              <div className="text-right">
+                <div className="text-[9px] text-[#999] uppercase tracking-[2px]">Manche</div>
+                <div className="text-[22px] font-bold text-[#e00000] leading-[1.1]">{round}</div>
               </div>
-              <div className="ms-stat">
-                <div className="ms-stat-label">Meilleur</div>
-                <div className="ms-stat-value">{best || '—'}</div>
+              <div className="text-right">
+                <div className="text-[9px] text-[#999] uppercase tracking-[2px]">Meilleur</div>
+                <div className="text-[22px] font-bold text-[#111111] leading-[1.1]">{best || '—'}</div>
               </div>
             </div>
           </header>
 
           {/* IDLE */}
           {screen === 'idle' && (
-            <div className="ms-screen">
-              <div className="ms-idle-title">Observe. Mémorise. Répète.</div>
-              <div className="ms-rules-list">
-                <div className="ms-rule-item">Regarde une séquence de flèches s'afficher une par une.</div>
-                <div className="ms-rule-item">Reproduis-la dans le <strong style={{color:'#e00000'}}>même ordre exact</strong>.</div>
-                <div className="ms-rule-item">Commence à 1 flèche. +1 par manche. 12 manches au total. Les flèches s'accélèrent à chaque manche.</div>
-                <div className="ms-rule-item">Atteins la manche 8 pour débloquer un fragment de mot de passe.</div>
-                <div className="ms-rule-item">Une seule erreur et c'est terminé.</div>
+            <div className="w-full flex flex-col items-center gap-5">
+              <div className="font-['Bebas_Neue',_sans-serif] text-[26px] tracking-[4px] text-[#999] text-center">
+                Observe. Mémorise. Répète.
               </div>
-              <div className="ms-best-score">Meilleure manche : <span>{best ? 'manche ' + best : 'aucune'}</span></div>
-              <button className="ms-btn-primary" onClick={startGame}>COMMENCER</button>
+              <div className="w-full bg-[#f5f5f5] border border-[#e0e0e0] px-6 py-5 flex flex-col gap-2.5">
+                <div className="text-[12px] text-[#999] flex gap-2.5 leading-relaxed before:content-['—'] before:text-[#e00000] before:shrink-0">
+                  Regarde une séquence de flèches s'afficher une par une.
+                </div>
+                <div className="text-[12px] text-[#999] flex gap-2.5 leading-relaxed before:content-['—'] before:text-[#e00000] before:shrink-0">
+                  <span>Reproduis-la dans le <strong className="text-[#e00000] font-bold">même ordre exact</strong>.</span>
+                </div>
+                <div className="text-[12px] text-[#999] flex gap-2.5 leading-relaxed before:content-['—'] before:text-[#e00000] before:shrink-0">
+                  Commence à 1 flèche. +1 par manche. 12 manches au total. Les flèches s'accélèrent à chaque manche.
+                </div>
+                <div className="text-[12px] text-[#999] flex gap-2.5 leading-relaxed before:content-['—'] before:text-[#e00000] before:shrink-0">
+                  Atteins la manche 8 pour débloquer un fragment de mot de passe.
+                </div>
+                <div className="text-[12px] text-[#999] flex gap-2.5 leading-relaxed before:content-['—'] before:text-[#e00000] before:shrink-0">
+                  Une seule erreur et c'est terminé.
+                </div>
+              </div>
+              <div className="text-[11px] text-[#999] tracking-[2px]">
+                Meilleure manche : <span className="text-[#e00000]">{best ? 'manche ' + best : 'aucune'}</span>
+              </div>
+              <button 
+                className="bg-[#e00000] text-white border-none font-['Bebas_Neue',_sans-serif] text-[28px] tracking-[3px] py-[14px] px-12 cursor-pointer w-full transition-all duration-100 hover:bg-[#b00000] active:scale-[0.98]" 
+                onClick={startGame}
+              >
+                COMMENCER
+              </button>
             </div>
           )}
 
           {/* WATCH */}
           {screen === 'watch' && (
-            <div className="ms-screen">
-              <div className="ms-panel">
-                <div className="ms-panel-label">Mémorise la séquence</div>
-                <div className={`ms-arrow-display ${arrowDisplay.flashClass}`}>
+            <div className="w-full flex flex-col items-center gap-5">
+              <div className="w-full bg-[#f5f5f5] border border-[#e0e0e0] p-7 flex flex-col items-center gap-5">
+                <div className="text-[10px] tracking-[3px] uppercase text-[#999] self-start">
+                  Mémorise la séquence
+                </div>
+                <div 
+                  className="w-[120px] h-[120px] flex items-center justify-center border-2 transition-colors duration-100"
+                  style={{ borderColor: arrowDisplay.flashColor }}
+                >
                   <span style={{ color: arrowDisplay.color, fontSize: arrowDisplay.glyph === '. . .' ? 32 : 72 }}>
                     {arrowDisplay.glyph}
                   </span>
                 </div>
-                <div className="ms-dots">
+                <div className="flex gap-2 flex-wrap justify-center">
                   {dotStates.map((state, i) => (
-                    <div key={i} className={`ms-dot ${state === 'active' ? 'active' : state === 'done' ? 'done' : ''}`} />
+                    <div 
+                      key={i} 
+                      className={`w-[10px] h-[10px] rounded-full transition-colors duration-150 
+                        ${state === 'active' ? 'bg-[#e00000]' : state === 'done' ? 'bg-[#b00000]' : 'bg-[#ccc]'}`} 
+                    />
                   ))}
                 </div>
-                <div className="ms-countdown">{countdown}</div>
+                <div className="font-['Bebas_Neue',_sans-serif] text-[18px] tracking-[3px] text-[#e00000]">
+                  {countdown}
+                </div>
               </div>
             </div>
           )}
 
           {/* INPUT */}
           {screen === 'input' && (
-            <div className="ms-screen">
-              <div className="ms-panel">
-                <div className="ms-panel-label">Répète la séquence dans l'ordre</div>
-                <div className="ms-input-sequence">
+            <div className="w-full flex flex-col items-center gap-5">
+              <div className="w-full bg-[#f5f5f5] border border-[#e0e0e0] p-7 flex flex-col items-center gap-5">
+                <div className="text-[10px] tracking-[3px] uppercase text-[#999] self-start">
+                  Répète la séquence dans l'ordre
+                </div>
+                <div className="flex gap-1.5 flex-wrap justify-center min-h-[52px] items-center">
                   {slots.map((slot, i) => (
-                    <div key={i} className={`ms-slot ${slot.state}`} style={{ color: slot.color }}>
+                    <div 
+                      key={i} 
+                      className={`w-[44px] h-[44px] flex items-center justify-center text-[24px] border ${slotStyles[slot.state]}`} 
+                      style={{ color: slot.color }}
+                    >
                       {slot.glyph}
                     </div>
                   ))}
                 </div>
-                <div className="ms-progress-bar">
-                  <div className="ms-progress-fill" style={{ width: progress + '%' }} />
+                <div className="w-full h-[3px] bg-[#e0e0e0]">
+                  <div 
+                    className="h-full bg-[#e00000] transition-[width] duration-300 ease-in-out" 
+                    style={{ width: progress + '%' }} 
+                  />
                 </div>
               </div>
-              <div className={`ms-arrow-btns${shaking ? ' shake' : ''}`}>
-                <button className="ms-arrow-btn ms-btn-up"    onClick={() => handleArrow('up')}>↑</button>
-                <button className="ms-arrow-btn ms-btn-left"  onClick={() => handleArrow('left')}>←</button>
-                <button className="ms-arrow-btn ms-btn-down"  onClick={() => handleArrow('down')}>↓</button>
-                <button className="ms-arrow-btn ms-btn-right" onClick={() => handleArrow('right')}>→</button>
+              
+              <div className={`grid grid-cols-[repeat(3,64px)] grid-rows-[repeat(3,64px)] gap-1 ${shaking ? 'animate-shake' : ''}`}>
+                <button 
+                  className="col-start-2 row-start-1 bg-[#f5f5f5] border border-[#e0e0e0] text-[#111111] text-[28px] cursor-pointer flex items-center justify-center transition-all duration-75 select-none hover:bg-[#f0f0f0] hover:border-[#111111] active:scale-[0.92]" 
+                  onClick={() => handleArrow('up')}>↑</button>
+                <button 
+                  className="col-start-1 row-start-2 bg-[#f5f5f5] border border-[#e0e0e0] text-[#111111] text-[28px] cursor-pointer flex items-center justify-center transition-all duration-75 select-none hover:bg-[#f0f0f0] hover:border-[#cc0000] active:scale-[0.92]" 
+                  onClick={() => handleArrow('left')}>←</button>
+                <button 
+                  className="col-start-2 row-start-2 bg-[#f5f5f5] border border-[#e0e0e0] text-[#111111] text-[28px] cursor-pointer flex items-center justify-center transition-all duration-75 select-none hover:bg-[#f0f0f0] hover:border-[#e00000] active:scale-[0.92]" 
+                  onClick={() => handleArrow('down')}>↓</button>
+                <button 
+                  className="col-start-3 row-start-2 bg-[#f5f5f5] border border-[#e0e0e0] text-[#111111] text-[28px] cursor-pointer flex items-center justify-center transition-all duration-75 select-none hover:bg-[#f0f0f0] hover:border-[#888888] active:scale-[0.92]" 
+                  onClick={() => handleArrow('right')}>→</button>
               </div>
             </div>
           )}
 
           {/* RESULT */}
           {screen === 'result' && (
-            <div className="ms-screen">
-              <div className={`ms-result-badge ${resultBadge.cls}`}>{resultBadge.text}</div>
-              <div className="ms-result-detail">{resultDetail}</div>
-              <button className="ms-btn-primary" onClick={handleResult}>{resultBtnText}</button>
+            <div className="w-full flex flex-col items-center gap-5">
+              <div className={`font-['Bebas_Neue',_sans-serif] text-[72px] leading-none tracking-[4px] ${resultBadge.cls === 'win' ? 'text-[#e00000]' : 'text-[#cc0000]'}`}>
+                {resultBadge.text}
+              </div>
+              <div className="text-[13px] text-[#999] text-center leading-[1.8]">
+                {resultDetail}
+              </div>
+              <button 
+                className="bg-[#e00000] text-white border-none font-['Bebas_Neue',_sans-serif] text-[28px] tracking-[3px] py-[14px] px-12 cursor-pointer w-full transition-all duration-100 hover:bg-[#b00000] active:scale-[0.98]" 
+                onClick={handleResult}
+              >
+                {resultBtnText}
+              </button>
             </div>
           )}
         </div>
