@@ -9,8 +9,8 @@ const LANE_COUNT    = 4;
 const LANE_WIDTH    = GAME_WIDTH / LANE_COUNT;
 const RECEPTOR_Y    = 510;
 const ARROW_SIZE    = 56;
-const SPEED_START   = 220;
-const SPEED_END     = 700;
+const SPEED_START   = 240;
+const SPEED_END     = 760;
 const HIT_WINDOW    = 450;
 const MISS_LIMIT    = 3;
 const HITS_PER_LIFE = 8;
@@ -27,6 +27,119 @@ function getSpeed(elapsed) {
   return SPEED_START + (SPEED_END - SPEED_START) * Math.pow(t, 0.45);
 }
 
+// ── Audio (Web Audio API) ──────────────────────────────────────────────────────
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+// Chaque lane a sa propre note de la gamme pentatonique (C4, E4, G4, A4)
+const LANE_NOTES = [261.63, 329.63, 392, 440];
+
+function playHit(quality, lane) {
+  const ctx  = getAudioCtx();
+  const now  = ctx.currentTime;
+  // Légère variation de pitch pour garder un son vivant sans effet "faux"
+  const base = LANE_NOTES[lane ?? 0] * (1 + (Math.random() - 0.5) * 0.02);
+
+  const master = ctx.createGain();
+  const tone = ctx.createBiquadFilter();
+  tone.type = 'lowpass';
+  tone.frequency.setValueAtTime(5200, now);
+  tone.Q.value = 0.7;
+
+  master.connect(tone);
+  tone.connect(ctx.destination);
+
+  function softVoice(freq, type, peak, attack, release, offset = 0) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    const t0 = now + offset;
+    const t1 = t0 + attack;
+    const t2 = t1 + release;
+
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+
+    // Enveloppe douce: petite attaque + relâchement progressif
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(peak, t1);
+    g.gain.exponentialRampToValueAtTime(0.0001, t2);
+
+    o.connect(g);
+    g.connect(master);
+    o.start(t0);
+    o.stop(t2);
+  }
+
+  if (quality === 2) {
+    // PERFECT: petit "chime" harmonique et chaleureux
+    master.gain.setValueAtTime(0.58, now);
+    softVoice(base,         'triangle', 0.28, 0.012, 0.3);
+    softVoice(base * 2,     'sine',     0.14, 0.01, 0.24);
+    softVoice(base * 1.5,   'sine',     0.09, 0.014, 0.28);
+    softVoice(base * 1.004, 'triangle', 0.06, 0.012, 0.34);
+  } else if (quality === 1) {
+    // GREAT: même couleur, un peu plus court
+    master.gain.setValueAtTime(0.56, now);
+    softVoice(base,         'triangle', 0.25, 0.01, 0.22);
+    softVoice(base * 2,     'sine',     0.1, 0.01, 0.18);
+    softVoice(base * 1.004, 'triangle', 0.05, 0.01, 0.24);
+  } else {
+    // GOOD: ping discret, jamais agressif
+    master.gain.setValueAtTime(0.52, now);
+    softVoice(base,         'triangle', 0.2, 0.008, 0.14);
+    softVoice(base * 2,     'sine',     0.06, 0.008, 0.11);
+  }
+}
+
+function playMiss() {
+  const ctx = getAudioCtx();
+  const now = ctx.currentTime;
+
+  // Miss doux: "plop" grave court, sans bruit agressif
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  const low = ctx.createBiquadFilter();
+  low.type = 'lowpass';
+  low.frequency.setValueAtTime(1200, now);
+
+  o.connect(g);
+  g.connect(low);
+  low.connect(ctx.destination);
+
+  o.type = 'triangle';
+  o.frequency.setValueAtTime(160, now);
+  o.frequency.exponentialRampToValueAtTime(85, now + 0.12);
+
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.linearRampToValueAtTime(0.22, now + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+  o.start(now);
+  o.stop(now + 0.18);
+}
+
+function playLifeUp() {
+  const ctx = getAudioCtx();
+  const now = ctx.currentTime;
+  // Arpège ascendant C-E-G-C (Do majeur)
+  [261.63, 329.63, 392, 523.25].forEach((freq, i) => {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq, now + i * 0.09);
+    g.gain.setValueAtTime(0.22, now + i * 0.09);
+    g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.09 + 0.18);
+    o.start(now + i * 0.09);
+    o.stop(now + i * 0.09 + 0.18);
+  });
+}
+
+// ── Lanes ──────────────────────────────────────────────────────────────────────
 const LANES = [
   { key: 'ArrowLeft',  color: '#FF6B9D', label: '←', altKey: 'F' },
   { key: 'ArrowDown',  color: '#6BC5FF', label: '↓', altKey: 'G' },
@@ -183,6 +296,7 @@ export default function RhythmGame() {
         setMisses(missesRef.current);
         setCombo(0);
         showFeedback('MISS', arrow.lane);
+        playMiss();
         if (missesRef.current >= MISS_LIMIT) hitMissLimit = true;
         return false;
       }
@@ -259,10 +373,12 @@ export default function RhythmGame() {
           missesRef.current -= 1;
           setMisses(missesRef.current);
           showFeedback('+VIE !', lane);
+          playLifeUp();
         } else {
           let label = 'GOOD!';
-          if (bestDiff < 80) label = 'PERFECT!';
-          else if (bestDiff < 200) label = 'GREAT!';
+          if (bestDiff < 80)       { label = 'PERFECT!'; playHit(2); }
+          else if (bestDiff < 200) { label = 'GREAT!';   playHit(1); }
+          else                     {                      playHit(0); }
           showFeedback(label, lane);
         }
       } else {
@@ -277,6 +393,7 @@ export default function RhythmGame() {
           setMisses(missesRef.current);
           setCombo(0);
           showFeedback('MISS', lane);
+          playMiss();
           if (missesRef.current >= MISS_LIMIT) {
             activeRef.current = false;
             setGameState('gameover');
