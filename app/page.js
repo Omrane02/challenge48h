@@ -1,4 +1,4 @@
-import App from "./control-glitch/App";
+import App from "../components/control-glitch/App";
 
 export default function Page() {
   return <App />;

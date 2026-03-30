@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import GameBoard from './components/GameBoard'
-import EndScreen from './components/EndScreen'
+import GameBoard from './modele/GameBoard'
+import EndScreen from './modele/EndScreen'
 import './glitch.css'
 
 export default function App() {
