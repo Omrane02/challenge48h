@@ -14,10 +14,18 @@ function getDelay(round) {
 }
 
 function randomSequence(len) {
-  return Array.from({ length: len }, () => ARROWS[Math.floor(Math.random() * 4)]);
+  const seq = [];
+  for (let i = 0; i < len; i++) {
+    let last = seq[i - 1];
+    let next;
+    do {
+      next = ARROWS[Math.floor(Math.random() * 4)];
+    } while (next === last);
+    seq.push(next);
+  }
+  return seq;
 }
 
-// Nous gardons juste l'import des polices et l'animation keyframe spécifique
 const minimalStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -41,7 +49,6 @@ export default function MirrorSequence() {
   const [sequence, setSequence]   = useState([]);
   const [inputIdx, setInputIdx]   = useState(0);
   const [slots, setSlots]         = useState([]);
-  const [dotStates, setDotStates] = useState([]);
   const [countdown, setCountdown] = useState('');
   const [arrowDisplay, setArrowDisplay] = useState({ glyph: '?', color: '#ddd', flashColor: '#e0e0e0' });
   const [resultBadge, setResultBadge]   = useState({ text: '', cls: '' });
@@ -50,11 +57,11 @@ export default function MirrorSequence() {
   const [gameOver, setGameOver]   = useState(false);
   const [shaking, setShaking]     = useState(false);
 
-  const seqRef     = useRef([]);
+  const seqRef      = useRef([]);
   const inputIdxRef = useRef(0);
-  const roundRef   = useRef(1);
+  const roundRef    = useRef(1);
   const gameOverRef = useRef(false);
-  const bestRef    = useRef(0);
+  const bestRef     = useRef(0);
 
   useEffect(() => { seqRef.current = sequence; }, [sequence]);
   useEffect(() => { inputIdxRef.current = inputIdx; }, [inputIdx]);
@@ -79,38 +86,40 @@ export default function MirrorSequence() {
     playSequence(seq, r);
   }, []);
 
-  const playSequence = useCallback((seq, r) => {
-    setScreen('watch');
-    setDotStates(Array(seq.length).fill('idle'));
-    setArrowDisplay({ glyph: '?', color: '#ddd', flashColor: '#e0e0e0' });
-    const delay = getDelay(r);
-    setCountdown(`Vitesse : ${delay}ms/flèche`);
-
-    let i = 0;
-    function showNext() {
-      if (i > 0) setDotStates(prev => prev.map((d, idx) => idx === i - 1 ? 'done' : d));
-      if (i < seq.length) {
-        setDotStates(prev => prev.map((d, idx) => idx === i ? 'active' : d));
-        const dir = seq[i];
-        setArrowDisplay({ glyph: GLYPH[dir], color: COLOR[dir], flashColor: COLOR[dir] });
-        setCountdown(`${seq.length - i} restante${seq.length - i > 1 ? 's' : ''}`);
-        i++;
-        setTimeout(showNext, delay);
-      } else {
-        setCountdown('À toi !');
-        setArrowDisplay({ glyph: '. . .', color: '#ccc', flashColor: '#e0e0e0' });
-        setTimeout(() => beginInput(seq), 500);
-      }
-    }
-    showNext();
-  }, []);
-
   const beginInput = useCallback((seq) => {
     setScreen('input');
     setSlots(seq.map((_, idx) => ({ glyph: '', color: '', state: idx === 0 ? 'current' : 'pending' })));
     inputIdxRef.current = 0;
     setInputIdx(0);
   }, []);
+
+  const playSequence = useCallback((seq, r) => {
+    setScreen('watch');
+    setArrowDisplay({ glyph: '?', color: '#ddd', flashColor: '#e0e0e0' });
+    const delay = getDelay(r);
+    
+    let i = 0;
+    function showNext() {
+      if (i < seq.length) {
+        const dir = seq[i];
+        setArrowDisplay({ glyph: GLYPH[dir], color: COLOR[dir], flashColor: COLOR[dir] });
+        
+        // MODIFICATION : Affiche le décompte uniquement s'il reste plus d'une flèche après celle-ci
+        const remaining = seq.length - (i + 1);
+        if (remaining > 0) {
+          setCountdown(`${remaining} restante${remaining > 1 ? 's' : ''}`);
+        } else {
+          setCountdown(''); // Vide pour la dernière flèche
+        }
+        
+        i++;
+        setTimeout(showNext, delay);
+      } else {
+        beginInput(seq);
+      }
+    }
+    showNext();
+  }, [beginInput]);
 
   const handleArrow = useCallback((dir) => {
     const seq = seqRef.current;
@@ -167,13 +176,13 @@ export default function MirrorSequence() {
 
     if (r === MAX_ROUNDS) {
       setResultBadge({ text: 'VICTOIRE', cls: 'win' });
-      setResultDetail(<>Les {MAX_ROUNDS} manches sont terminées.<br/>Séquence finale : {seq.length} flèches à {getDelay(r)}ms/flèche.<br/><br/>Tu es franchement terrifiant.{fragmentEl}</>);
+      setResultDetail(<>Félicitations, tu as terminé les {MAX_ROUNDS} manches !{fragmentEl}</>);
       setResultBtnText('REJOUER');
       gameOverRef.current = true;
       setGameOver(true);
     } else {
       setResultBadge({ text: 'RÉUSSI', cls: 'win' });
-      setResultDetail(<>Manche {r} / {MAX_ROUNDS} réussie.<br/>Séquence : {seq.length} flèches à {getDelay(r)}ms chacune.<br/><br/>Suivante : {seq.length + 1} flèches à {getDelay(r + 1)}ms chacune.{fragmentEl}</>);
+      setResultDetail(<>Manche {r} terminée avec succès.{fragmentEl}</>);
       setResultBtnText('MANCHE SUIVANTE');
       roundRef.current = r + 1;
       setRound(r + 1);
@@ -187,11 +196,11 @@ export default function MirrorSequence() {
     const r = roundRef.current;
     const seq = seqRef.current;
     const hint = r < MIN_ROUND_FOR_FRAGMENT
-      ? <><br/><br/><span className="text-[#999] text-[11px]">Atteins la manche 8 pour débloquer un fragment. Il te manque encore {MIN_ROUND_FOR_FRAGMENT - r} manche{MIN_ROUND_FOR_FRAGMENT - r > 1 ? 's' : ''}.</span></>
+      ? <><br/><br/><span className="text-[#999] text-[11px]">Atteins la manche 8 pour le fragment de mot de passe.</span></>
       : null;
     
     setResultBadge({ text: 'RATÉ', cls: 'fail' });
-    setResultDetail(<>Tu as atteint la manche {r} / {MAX_ROUNDS}.<br/>La séquence avait {seq.length} flèche{seq.length > 1 ? 's' : ''}.<br/><br/>La bonne séquence était :<br/>{seq.map((a, i) => <span key={i} style={{color: COLOR[a]}}>{GLYPH[a]} </span>)}{hint}</>);
+    setResultDetail(<>Échec à la manche {r}.<br/><br/>Séquence correcte :<br/>{seq.map((a, i) => <span key={i} style={{color: COLOR[a]}}>{GLYPH[a]} </span>)}{hint}</>);
     setResultBtnText('RÉESSAYER');
     gameOverRef.current = true;
     setGameOver(true);
@@ -224,7 +233,6 @@ export default function MirrorSequence() {
 
   const progress = sequence.length > 0 ? (inputIdx / sequence.length) * 100 : 0;
 
-  // Configuration des classes conditionnelles pour les slots
   const slotStyles = {
     correct: 'border-[#39ff14] bg-[rgba(57,255,20,0.08)]',
     wrong:   'border-[#ff4040] bg-[rgba(255,64,64,0.08)]',
@@ -238,7 +246,6 @@ export default function MirrorSequence() {
       
       <div style={{ background: '#05050f', color: '#fff', fontFamily: "'Share Tech Mono', monospace" }} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
 
-        {/* Motif d'arrière-plan (grille) */}
         <div
           className="fixed inset-0 pointer-events-none z-0"
           style={{
@@ -267,7 +274,6 @@ export default function MirrorSequence() {
             </div>
           </header>
 
-          {/* IDLE */}
           {screen === 'idle' && (
             <div className="w-full flex flex-col items-center gap-5">
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '26px', letterSpacing: '4px', color: '#39ff14', textAlign: 'center' }}>
@@ -275,19 +281,15 @@ export default function MirrorSequence() {
               </div>
               <div className="w-full px-6 py-5 flex flex-col gap-2.5" style={{ background: 'rgba(12,12,24,0.8)', border: '1px solid rgba(57,255,20,0.15)', borderRadius: '8px' }}>
                 {[
-                  "Regarde une séquence de flèches s'afficher une par une.",
+                  "Regarde la séquence s'afficher.",
                   <span key="b">Reproduis-la dans le <strong style={{ color: '#39ff14' }}>même ordre exact</strong>.</span>,
-                  "Commence à 1 flèche. +1 par manche. 12 manches au total. Les flèches s'accélèrent.",
-                  "Atteins la manche 8 pour débloquer un fragment de mot de passe.",
-                  "Une seule erreur et c'est terminé.",
+                  "12 manches. Vitesse croissante.",
+                  "Manche 8 = Fragment de mot de passe.",
                 ].map((text, i) => (
                   <div key={i} className="text-[12px] flex gap-2.5 leading-relaxed" style={{ color: '#555' }}>
                     <span style={{ color: '#39ff14', flexShrink: 0 }}>—</span>{text}
                   </div>
                 ))}
-              </div>
-              <div className="text-[11px] tracking-[2px]" style={{ color: '#444' }}>
-                Meilleure manche : <span style={{ color: '#39ff14' }}>{best ? 'manche ' + best : 'aucune'}</span>
               </div>
               <button
                 className="w-full py-[14px] px-12 cursor-pointer transition-all duration-100 active:scale-[0.98] uppercase tracking-[0.15em]"
@@ -301,29 +303,19 @@ export default function MirrorSequence() {
             </div>
           )}
 
-          {/* WATCH */}
           {screen === 'watch' && (
             <div className="w-full flex flex-col items-center gap-5">
               <div className="w-full p-7 flex flex-col items-center gap-5" style={{ background: 'rgba(12,12,24,0.8)', border: '1px solid rgba(57,255,20,0.15)', borderRadius: '8px' }}>
                 <div className="text-[10px] tracking-[3px] uppercase self-start" style={{ color: '#444' }}>
-                  Mémorise la séquence
+                  Mémorisation
                 </div>
                 <div
                   className="w-[120px] h-[120px] flex items-center justify-center border-2 transition-colors duration-100"
                   style={{ borderColor: arrowDisplay.flashColor, background: 'rgba(5,5,15,0.8)', borderRadius: '4px' }}
                 >
-                  <span style={{ color: arrowDisplay.color, fontSize: arrowDisplay.glyph === '. . .' ? 32 : 72 }}>
+                  <span style={{ color: arrowDisplay.color, fontSize: 72 }}>
                     {arrowDisplay.glyph}
                   </span>
-                </div>
-                <div className="flex gap-2 flex-wrap justify-center">
-                  {dotStates.map((state, i) => (
-                    <div
-                      key={i}
-                      className="w-[10px] h-[10px] rounded-full transition-colors duration-150"
-                      style={{ background: state === 'active' ? '#39ff14' : state === 'done' ? '#2db80d' : 'rgba(255,255,255,0.1)' }}
-                    />
-                  ))}
                 </div>
                 <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '18px', letterSpacing: '3px', color: '#39ff14' }}>
                   {countdown}
@@ -332,12 +324,11 @@ export default function MirrorSequence() {
             </div>
           )}
 
-          {/* INPUT */}
           {screen === 'input' && (
             <div className="w-full flex flex-col items-center gap-5">
               <div className="w-full p-7 flex flex-col items-center gap-5" style={{ background: 'rgba(12,12,24,0.8)', border: '1px solid rgba(57,255,20,0.15)', borderRadius: '8px' }}>
                 <div className="text-[10px] tracking-[3px] uppercase self-start" style={{ color: '#444' }}>
-                  Répète la séquence dans l'ordre
+                  Saisie de la séquence
                 </div>
                 <div className="flex gap-1.5 flex-wrap justify-center min-h-[52px] items-center">
                   {slots.map((slot, i) => (
@@ -378,7 +369,6 @@ export default function MirrorSequence() {
             </div>
           )}
 
-          {/* RESULT */}
           {screen === 'result' && (
             <div className="w-full flex flex-col items-center gap-5">
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '72px', lineHeight: 1, letterSpacing: '4px', color: resultBadge.cls === 'win' ? '#39ff14' : '#ff4040', textShadow: resultBadge.cls === 'win' ? '0 0 20px rgba(57,255,20,0.5)' : '0 0 20px rgba(255,64,64,0.5)' }}>
