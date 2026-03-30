@@ -98,6 +98,7 @@ export default function MemoryGame({
   secretEmoji = '🦊',
   secretLetter = 'Z',
   onWin,
+  onBack,
 }) {
   const [cards, setCards] = useState([]);
   const [flippedIndices, setFlippedIndices] = useState([]);
@@ -154,7 +155,7 @@ export default function MemoryGame({
   }, [startNewGame]);
 
   useEffect(() => {
-    if (gameStatus === 'won' && onWin) onWin();
+    if (gameStatus === 'secret' && onWin) onWin();
   }, [gameStatus, onWin]);
 
   // Handle Card Flip
@@ -441,12 +442,22 @@ export default function MemoryGame({
               </div>
             </div>
             <br />
-            <button
-              className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border border-[#bf00ff] bg-transparent text-[#bf00ff] hover:bg-[#bf00ff] hover:text-black active:scale-95 mt-4"
-              onClick={startNewGame}
-            >
-              Rejouer
-            </button>
+            <div className="flex gap-3 mt-4">
+              {onBack && (
+                <button
+                  className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border border-white/20 bg-transparent text-white/60 hover:bg-white/10 hover:text-white active:scale-95"
+                  onClick={onBack}
+                >
+                  ← Retour
+                </button>
+              )}
+              <button
+                className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border border-[#bf00ff] bg-transparent text-[#bf00ff] hover:bg-[#bf00ff] hover:text-black active:scale-95"
+                onClick={startNewGame}
+              >
+                Rejouer
+              </button>
+            </div>
           </div>
         )}
 

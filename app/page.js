@@ -649,7 +649,7 @@ function App() {
   const handleWin = () => {
     const currentIndex = GAMES.findIndex(g => g.id === currentGame);
     if (currentIndex + 2 > unlockedLevel) {
-      const newLevel = Math.min(currentIndex + 2, GAMES.length);
+      const newLevel = Math.min(currentIndex + 2, GAMES.length + 1);
       setUnlockedLevel(newLevel);
       localStorage.setItem('arcadeProgress', newLevel);
     }

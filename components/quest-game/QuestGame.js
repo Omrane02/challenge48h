@@ -310,7 +310,7 @@ const SECRET_LETTER = 'U'
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function QuestGame({ onBack }) {
+export default function QuestGame({ onBack, onWin }) {
   const [levelIdx,   setLevelIdx]   = useState(0)
   const [pos,        setPos]        = useState(LEVELS[0].playerStart)
   const [dir,        setDir]        = useState('right')

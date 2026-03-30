@@ -15,7 +15,7 @@ const HIT_WINDOW    = 450;
 const MISS_LIMIT    = 3;
 const HITS_PER_LIFE = 8;
 const GAME_DURATION = 90;
-const SECRET_LETTER = 'I';
+const SECRET_LETTER = 'B';
 const GRACE_MS      = 1000;
 
 const TRAVEL_DISTANCE = RECEPTOR_Y + ARROW_SIZE;
