@@ -9,16 +9,23 @@ const LANE_COUNT    = 4;
 const LANE_WIDTH    = GAME_WIDTH / LANE_COUNT;
 const RECEPTOR_Y    = 510;
 const ARROW_SIZE    = 56;
-const ARROW_SPEED   = 180;
+const SPEED_START   = 220;
+const SPEED_END     = 700;
 const HIT_WINDOW    = 450;
-const MISS_LIMIT    = 10;
-const HITS_PER_LIFE = 8;    // successful hits needed to recover 1 life
+const MISS_LIMIT    = 3;
+const HITS_PER_LIFE = 8;
 const GAME_DURATION = 120;
-const SECRET_LETTER = 'A';
-const GRACE_MS      = 1000; // silent delay before first arrow appears at top
+const SECRET_LETTER = 'I';
+const GRACE_MS      = 1000;
 
 const TRAVEL_DISTANCE = RECEPTOR_Y + ARROW_SIZE;
-const TRAVEL_TIME_MS  = (TRAVEL_DISTANCE / ARROW_SPEED) * 1000;
+const START_TRAVEL_MS = (TRAVEL_DISTANCE / SPEED_START) * 1000;
+
+function getSpeed(elapsed) {
+  // Accelerates quickly — most of the ramp happens in the first half of the game
+  const t = Math.min(1, Math.max(0, elapsed / (GAME_DURATION * 1000)));
+  return SPEED_START + (SPEED_END - SPEED_START) * Math.pow(t, 0.45);
+}
 
 const LANES = [
   { key: 'ArrowLeft',  color: '#FF6B9D', label: '←', altKey: 'F' },
@@ -54,21 +61,35 @@ function generateChart() {
   const EIGHTH = 250;
 
   const patterns = [
+    // 0: 4 croches simples
     [[0,0],[BEAT,1],[BEAT*2,2],[BEAT*3,3]],
+    // 1: 5 notes avec double croche
     [[0,0],[BEAT,1],[BEAT+EIGHTH,2],[BEAT*2,3],[BEAT*3,0]],
+    // 2: alternance 4 notes
     [[0,1],[BEAT,0],[BEAT*2,3],[BEAT*3,2]],
+    // 3: 6 notes — doubles croches en début de mesure
+    [[0,0],[EIGHTH,1],[BEAT,2],[BEAT+EIGHTH,3],[BEAT*2,0],[BEAT*3,1]],
+    // 4: 7 notes — très dense
+    [[0,2],[EIGHTH,3],[BEAT,0],[BEAT*2,1],[BEAT*2+EIGHTH,2],[BEAT*3,3],[BEAT*3+EIGHTH,0]],
+    // 5: 8 notes — doubles croches tout du long
+    [[0,0],[EIGHTH,1],[BEAT,2],[BEAT+EIGHTH,3],[BEAT*2,0],[BEAT*2+EIGHTH,1],[BEAT*3,2],[BEAT*3+EIGHTH,3]],
   ];
 
   const sequence = [
-    0,0,2,0, 0,2,0,0,
-    2,2,0,0, 2,2,0,0,
-    1,0,0,2, 1,0,0,2,
-    0,0,2,2, 0,0,2,2,
-    1,1,0,0, 2,2,0,0,
-    0,2,0,2, 0,2,0,2,
-    1,1,1,1, 0,0,0,0,
-    2,2,0,0,
-    0,2,0,2,
+    // 0–8s : intro douce (4 mesures)
+    0, 2, 0, 2,
+    // 8–24s : moderate (8 mesures)
+    0, 1, 2, 0, 1, 2, 0, 1,
+    // 24–40s : ça monte (8 mesures)
+    1, 3, 1, 3, 2, 3, 1, 3,
+    // 40–60s : medium-hard (10 mesures)
+    3, 1, 3, 3, 3, 1, 3, 3, 3, 3,
+    // 60–80s : hard (10 mesures)
+    3, 4, 3, 4, 4, 3, 4, 3, 4, 4,
+    // 80–100s : très dur (10 mesures)
+    4, 4, 5, 4, 5, 4, 4, 5, 4, 5,
+    // 100–120s : brutal (10 mesures)
+    5, 4, 5, 5, 5, 4, 5, 5, 5, 5,
   ];
 
   const PATTERN_DURATION = BEAT * 4;
@@ -108,10 +129,11 @@ export default function RhythmGame() {
   const scoreRef         = useRef(0);
   const comboRef         = useRef(0);
   const hitsForLifeRef   = useRef(0);
-  const gameStartRef     = useRef(null);
-  const rafRef           = useRef(null);
-  const feedbackTimerRef = useRef(null);
-  const activeRef        = useRef(false);
+  const gameStartRef       = useRef(null);
+  const rafRef             = useRef(null);
+  const feedbackTimerRef   = useRef(null);
+  const activeRef          = useRef(false);
+  const lastWrongPressRef  = useRef(0);
 
   const showFeedback = useCallback((text, lane) => {
     setFeedback({ text, lane });
@@ -133,10 +155,14 @@ export default function RhythmGame() {
       return;
     }
 
+    // Current speed & travel time
+    const speed      = getSpeed(elapsed);
+    const travelTime = (TRAVEL_DISTANCE / speed) * 1000;
+
     // Spawn arrows
     while (
       nextNoteIdxRef.current < CHART.length &&
-      CHART[nextNoteIdxRef.current].hitTime - elapsed <= TRAVEL_TIME_MS
+      CHART[nextNoteIdxRef.current].hitTime - elapsed <= travelTime
     ) {
       const note = CHART[nextNoteIdxRef.current++];
       arrowsRef.current.push({ ...note, status: 'active' });
@@ -148,7 +174,7 @@ export default function RhythmGame() {
       if (arrow.status !== 'active') return false;
 
       const timeToHit = arrow.hitTime - elapsed;
-      arrow.y = RECEPTOR_Y - (timeToHit * ARROW_SPEED) / 1000;
+      arrow.y = RECEPTOR_Y - (timeToHit * speed) / 1000;
 
       if (arrow.y > RECEPTOR_Y + ARROW_SIZE) {
         missesRef.current += 1;
@@ -190,7 +216,8 @@ export default function RhythmGame() {
     setTimeLeft(GAME_DURATION);
     setGrace(true);
     
-    gameStartRef.current = performance.now() + TRAVEL_TIME_MS + GRACE_MS;
+    lastWrongPressRef.current = 0;
+    gameStartRef.current = performance.now() + START_TRAVEL_MS + GRACE_MS;
     activeRef.current    = true;
     setGameState('playing');
     rafRef.current = requestAnimationFrame(gameLoop);
@@ -238,6 +265,23 @@ export default function RhythmGame() {
           else if (bestDiff < 200) label = 'GREAT!';
           showFeedback(label, lane);
         }
+      } else {
+        // Wrong press — no arrow in window
+        const now = performance.now();
+        const inGrace = (now - gameStartRef.current) < 0;
+        if (!inGrace && now - lastWrongPressRef.current > 400) {
+          lastWrongPressRef.current = now;
+          missesRef.current += 1;
+          comboRef.current = 0;
+          hitsForLifeRef.current = 0;
+          setMisses(missesRef.current);
+          setCombo(0);
+          showFeedback('MISS', lane);
+          if (missesRef.current >= MISS_LIMIT) {
+            activeRef.current = false;
+            setGameState('gameover');
+          }
+        }
       }
     };
 
@@ -268,9 +312,10 @@ export default function RhythmGame() {
   const livesLeft = MISS_LIMIT - misses;
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-[#080810] font-[Segoe_UI,monospace]">
-      <div 
-        className="relative bg-gradient-to-b from-[#0d0d1f] to-[#0a0a18] border-2 border-[#222] rounded-[10px] overflow-hidden shadow-[0_0_50px_rgba(100,0,255,0.25)]"
+    <div className="flex justify-center items-center min-h-screen bg-[#050000] font-[Segoe_UI,monospace]">
+      <div className="flex flex-col items-center gap-4">
+      <div
+        className="relative bg-gradient-to-b from-[#100000] to-[#060000] border-2 border-[#3a0000] rounded-[10px] overflow-hidden shadow-[0_0_50px_rgba(180,0,0,0.35)]"
         style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
       >
 
@@ -289,7 +334,7 @@ export default function RhythmGame() {
 
         {/* ── Combo ── */}
         {combo > 2 && gameState === 'playing' && !grace && (
-          <div className="absolute top-9 left-1/2 -translate-x-1/2 text-[#FFD700] text-[15px] font-bold z-[15] whitespace-nowrap [text-shadow:0_0_10px_#FFD700]">
+          <div className="absolute top-9 left-1/2 -translate-x-1/2 text-[#FF3333] text-[15px] font-bold z-[15] whitespace-nowrap [text-shadow:0_0_10px_#FF3333]">
             {combo}× COMBO
           </div>
         )}
@@ -300,7 +345,7 @@ export default function RhythmGame() {
             <div 
               key={i} 
               className="flex-1" 
-              style={{ borderRight: i < 3 ? '1px solid #1c1c30' : 'none' }} 
+              style={{ borderRight: i < 3 ? '1px solid #1e0000' : 'none' }}
             />
           ))}
         </div>
@@ -362,9 +407,9 @@ export default function RhythmGame() {
             style={{
               top:   RECEPTOR_Y - 90,
               left:  feedback.lane * LANE_WIDTH + LANE_WIDTH / 2,
-              color: feedback.text === 'MISS'    ? '#ff5555' :
-                     feedback.text === '+VIE !'  ? '#ff88ff' :
-                     feedback.text === 'PERFECT!'? '#FFD700' : '#A8FF6B',
+              color: feedback.text === 'MISS'    ? '#FF1111' :
+                     feedback.text === '+VIE !'  ? '#FF6666' :
+                     feedback.text === 'PERFECT!'? '#FFFFFF'  : '#FF9999',
             }}
           >
             {feedback.text}
@@ -373,43 +418,15 @@ export default function RhythmGame() {
 
         {/* ── Grace period banner ── */}
         {gameState === 'playing' && grace && (
-          <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#A855F7] text-[32px] font-bold z-[15] whitespace-nowrap tracking-[4px] [text-shadow:0_0_20px_#A855F7]">
+          <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#FF2222] text-[32px] font-bold z-[15] whitespace-nowrap tracking-[4px] [text-shadow:0_0_20px_#FF2222]">
             PRÊT…
-          </div>
-        )}
-
-        {/* ── Key legend (bottom-right) ── */}
-        {gameState === 'playing' && (
-          <div className="absolute bottom-3.5 right-3.5 flex flex-col gap-1 z-[15]">
-            <div className="flex gap-1.5">
-              {LANES.map((lane, i) => (
-                <div 
-                  key={i} 
-                  className="w-[26px] h-[26px] border-2 rounded-[5px] flex items-center justify-center text-[12px] font-bold bg-black/60"
-                  style={{ borderColor: lane.color, color: lane.color }}
-                >
-                  {lane.altKey}
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-1.5">
-              {LANES.map((lane, i) => (
-                <div 
-                  key={i} 
-                  className="w-[26px] h-[26px] border-2 rounded-[5px] flex items-center justify-center text-[12px] font-bold bg-black/60"
-                  style={{ borderColor: lane.color, color: lane.color }}
-                >
-                  {lane.label}
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
         {/* ── Screen: idle ── */}
         {gameState === 'idle' && (
-          <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-[100] gap-3.5">
-            <h1 className="text-[#A855F7] text-[44px] font-bold m-0 [text-shadow:0_0_25px_#A855F7] tracking-[5px]">
+          <div className="absolute inset-0 bg-black/92 flex flex-col items-center justify-center z-[100] gap-3.5">
+            <h1 className="text-[#FF0000] text-[44px] font-bold m-0 [text-shadow:0_0_25px_#FF0000] tracking-[5px]">
               RHYTHM RUSH
             </h1>
             <p className="text-[#ccc] text-[15px] m-0 text-center px-5">
@@ -425,11 +442,11 @@ export default function RhythmGame() {
                 </div>
               ))}
             </div>
-            <p className="text-[#ff7777] text-[13px] m-0">
-              Plus de {MISS_LIMIT} ratés = Game Over · +1 vie tous les {HITS_PER_LIFE} hits
+            <p className="text-[#cc3333] text-[13px] m-0">
+              {MISS_LIMIT} vies · appuyer à vide = -1 vie · +1 vie tous les {HITS_PER_LIFE} hits
             </p>
-            <button 
-              className="mt-2 py-3 px-9 text-[18px] font-bold bg-[#7C3AED] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-transform active:scale-95" 
+            <button
+              className="mt-2 py-3 px-9 text-[18px] font-bold bg-[#990000] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(180,0,0,0.6)] transition-transform active:scale-95"
               onClick={startGame}
             >
               ▶ JOUER
@@ -439,14 +456,14 @@ export default function RhythmGame() {
 
         {/* ── Screen: gameover ── */}
         {gameState === 'gameover' && (
-          <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-[100] gap-3.5">
-            <h2 className="text-[#ff5555] text-[38px] m-0 [text-shadow:0_0_20px_#ff5555]">
+          <div className="absolute inset-0 bg-black/92 flex flex-col items-center justify-center z-[100] gap-3.5">
+            <h2 className="text-[#FF0000] text-[38px] m-0 [text-shadow:0_0_30px_#FF0000]">
               GAME OVER
             </h2>
             <p className="text-[#ccc] text-[18px] m-0">Score : {score.toLocaleString()}</p>
-            <p className="text-[#888] text-[14px] m-0">Trop de flèches ratées…</p>
-            <button 
-              className="mt-2 py-3 px-9 text-[18px] font-bold bg-[#7C3AED] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-transform active:scale-95" 
+            <p className="text-[#666] text-[14px] m-0">Trop de fautes…</p>
+            <button
+              className="mt-2 py-3 px-9 text-[18px] font-bold bg-[#990000] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(180,0,0,0.6)] transition-transform active:scale-95"
               onClick={startGame}
             >
               RECOMMENCER
@@ -456,26 +473,48 @@ export default function RhythmGame() {
 
         {/* ── Screen: win ── */}
         {gameState === 'win' && (
-          <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-[100] gap-3.5">
-            <h2 className="text-[#FFD700] text-[38px] m-0 [text-shadow:0_0_20px_#FFD700]">
+          <div className="absolute inset-0 bg-black/92 flex flex-col items-center justify-center z-[100] gap-3.5">
+            <h2 className="text-white text-[38px] m-0 [text-shadow:0_0_20px_rgba(255,255,255,0.6)]">
               VICTOIRE !
             </h2>
             <p className="text-[#ccc] text-[18px] m-0">Score : {score.toLocaleString()}</p>
-            <p className="text-[#aaa] text-[14px] m-0">Tu as survécu aux 2 minutes !</p>
-            <div className="border-2 border-[#FFD700] rounded-[14px] py-3.5 px-9 text-center shadow-[0_0_24px_rgba(255,215,0,0.3)] mt-2">
-              <p className="text-[#aaa] text-[13px] m-0 mb-2">Lettre secrète :</p>
-              <span className="text-[#FFD700] text-[72px] font-bold [text-shadow:0_0_24px_#FFD700] block leading-none">
+            <p className="text-[#888] text-[14px] m-0">Tu as survécu aux 2 minutes !</p>
+            <div className="border-2 border-[#FF0000] rounded-[14px] py-3.5 px-9 text-center shadow-[0_0_24px_rgba(255,0,0,0.4)] mt-2">
+              <p className="text-[#888] text-[13px] m-0 mb-2">Lettre secrète :</p>
+              <span className="text-[#FF0000] text-[72px] font-bold [text-shadow:0_0_24px_#FF0000] block leading-none">
                 {SECRET_LETTER}
               </span>
             </div>
-            <button 
-              className="mt-4 py-3 px-9 text-[18px] font-bold bg-[#7C3AED] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-transform active:scale-95" 
+            <button
+              className="mt-4 py-3 px-9 text-[18px] font-bold bg-[#990000] text-white border-none rounded-lg cursor-pointer tracking-[2px] shadow-[0_0_20px_rgba(180,0,0,0.6)] transition-transform active:scale-95"
               onClick={startGame}
             >
               REJOUER
             </button>
           </div>
         )}
+
+      </div>
+
+      {/* ── Key legend (below game frame) ── */}
+      <div className="flex gap-5 justify-center">
+        {LANES.map((lane, i) => (
+          <div key={i} className="flex flex-col items-center gap-1.5">
+            <div
+              className="w-8 h-8 border-2 rounded-[6px] flex items-center justify-center text-[14px] font-bold bg-white/5"
+              style={{ borderColor: lane.color, color: lane.color }}
+            >
+              {lane.altKey}
+            </div>
+            <div
+              className="w-8 h-8 border-2 rounded-[6px] flex items-center justify-center text-[14px] font-bold bg-white/5"
+              style={{ borderColor: lane.color, color: lane.color }}
+            >
+              {lane.label}
+            </div>
+          </div>
+        ))}
+      </div>
 
       </div>
     </div>
