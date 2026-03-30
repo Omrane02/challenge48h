@@ -13,10 +13,10 @@ const JOKES = [
 ];
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');
 
-  .font-dm-serif { font-family: 'DM Serif Display', Georgia, serif; }
-  .font-dm-mono { font-family: 'DM Mono', 'Courier New', monospace; }
+  .font-dm-serif { font-family: 'Bebas Neue', sans-serif; }
+  .font-dm-mono { font-family: 'Share Tech Mono', 'Courier New', monospace; }
 
   /* Utilities for 3D card flip */
   .perspective-700 { perspective: 700px; }
@@ -257,48 +257,48 @@ export default function MemoryGame({
   return (
     <>
       <style>{styles}</style>
-      <div className="flex flex-col items-center font-dm-mono bg-[#2e2e2e] text-white py-10 px-4 min-h-screen box-border relative">
+      <div className="flex flex-col items-center font-dm-mono text-white py-10 px-4 min-h-screen box-border relative" style={{ background: '#05050f' }}>
         
         {/* Header */}
         <header className="text-center mb-2">
-          <p className="text-[0.65rem] tracking-[4px] uppercase text-[#888888] mb-1.5">✦ Jeu de concentration ✦</p>
-          <h1 className="font-dm-serif text-[clamp(2.8rem,7vw,5rem)] tracking-[-2px] leading-none text-white m-0">
-            MÉ<span className="text-[#c0392b] italic">MOIRE</span>
+          <p className="text-[0.65rem] tracking-[4px] uppercase mb-1.5" style={{ color: '#444' }}>✦ Jeu de concentration ✦</p>
+          <h1 className="font-dm-serif leading-none text-white m-0" style={{ fontSize: 'clamp(2.8rem,7vw,5rem)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(191,0,255,0.3)' }}>
+            MÉ<span style={{ color: '#bf00ff' }}>MOIRE</span>
           </h1>
-          <p className="text-[0.7rem] tracking-[3px] text-[#888888] mt-2 uppercase">Un secret se cache ici</p>
+          <p className="text-[0.7rem] tracking-[3px] mt-2 uppercase" style={{ color: '#444' }}>Un secret se cache ici</p>
         </header>
 
-        <hr className="w-[60px] border-none border-t-2 border-[#444] my-5 mx-auto" />
+        <hr className="w-[60px] border-none border-t my-5 mx-auto" style={{ borderColor: 'rgba(191,0,255,0.3)' }} />
 
         {/* Stats */}
         <div className="flex gap-10 mb-7 items-center">
           <div className="flex flex-col items-center">
             <span className={`font-dm-serif text-3xl leading-none transition-all duration-150 
-              ${bumpStats.moves ? 'scale-125 text-[#c0392b]' : 'text-white'} 
-              ${moves >= maxMoves - 2 ? '!text-[#c0392b]' : ''}`}
+              ${bumpStats.moves ? 'scale-125 text-[#bf00ff]' : 'text-white'} 
+              ${moves >= maxMoves - 2 ? '!text-[#bf00ff]' : ''}`}
             >
               {moves}
             </span>
-            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#888888] mt-1">Essais</span>
+            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#555] mt-1">Essais</span>
           </div>
           <span className="text-[#444] text-2xl">·</span>
           <div className="flex flex-col items-center">
             <span className={`font-dm-serif text-3xl leading-none transition-all duration-150 text-white
-              ${bumpStats.pairs ? 'scale-125 text-[#c0392b]' : ''}`}
+              ${bumpStats.pairs ? 'scale-125 text-[#bf00ff]' : ''}`}
             >
               {matchedPairs}
             </span>
-            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#888888] mt-1">Paires</span>
+            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#555] mt-1">Paires</span>
           </div>
           <span className="text-[#444] text-2xl">·</span>
           <div className="flex flex-col items-center">
             <span className="font-dm-serif text-3xl text-white leading-none">{time}s</span>
-            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#888888] mt-1">Temps</span>
+            <span className="text-[0.6rem] tracking-[2px] uppercase text-[#555] mt-1">Temps</span>
           </div>
         </div>
 
         {/* Secret Zone */}
-        <div className={`bg-[#111] text-white rounded-[10px] py-3.5 px-8 mb-7 text-center relative overflow-hidden min-w-[260px] transition-[outline] duration-200 ${secretFound ? 'outline outline-3 outline-[#c0392b]' : ''}`}>
+        <div className={`text-white rounded-[10px] py-3.5 px-8 mb-7 text-center relative overflow-hidden min-w-[260px] transition-all duration-200`} style={{ background: 'rgba(12,12,28,0.9)', border: secretFound ? '1px solid #bf00ff' : '1px solid rgba(191,0,255,0.15)', boxShadow: secretFound ? '0 0 20px rgba(191,0,255,0.2)' : 'none' }}>
           <div className="absolute inset-0 bg-secret-pattern pointer-events-none"></div>
           <div className="relative z-10 text-[0.6rem] tracking-[4px] uppercase text-white/40 mb-2">▲ Code Secret ▲</div>
           <span className={`font-dm-serif text-5xl min-w-[50px] inline-block text-center relative z-10 
@@ -324,9 +324,9 @@ export default function MemoryGame({
             >
               <div className="card-inner w-full h-full relative preserve-3d rounded-[10px]">
                 {/* Back of card (visible when face down) */}
-                <div className="card-face card-back-face absolute inset-0 rounded-[10px] backface-hidden flex items-center justify-center select-none bg-white border-2 border-white overflow-hidden">
-                   <div className="absolute inset-1 border border-black/15 rounded-md pointer-events-none"></div>
-                   <span className="text-[1.1rem] text-black/25">✦</span>
+                <div className="card-face card-back-face absolute inset-0 rounded-[10px] backface-hidden flex items-center justify-center select-none overflow-hidden" style={{ background: 'rgba(12,12,28,0.95)', border: '1px solid rgba(191,0,255,0.2)' }}>
+                   <div className="absolute inset-1 border rounded-md pointer-events-none" style={{ borderColor: 'rgba(255,255,255,0.04)' }}></div>
+                   <span className="text-[1.1rem]" style={{ color: 'rgba(191,0,255,0.3)' }}>✦</span>
                 </div>
                 {/* Front of card (visible when flipped) */}
                 <div className={`card-face card-front-face absolute inset-0 rounded-[10px] backface-hidden flex items-center justify-center select-none bg-[#3a3a3a] border-2 
@@ -343,7 +343,7 @@ export default function MemoryGame({
         </div>
 
         <button 
-          className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-white bg-transparent text-white hover:bg-white hover:text-black active:scale-95"
+          className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border border-[#bf00ff] bg-transparent text-[#bf00ff] hover:bg-[#bf00ff] hover:text-black active:scale-95"
           onClick={startNewGame}
         >
           ↺ Recommencer
@@ -353,24 +353,25 @@ export default function MemoryGame({
 
         {/* Win Overlay */}
         {gameStatus === 'won' && (
-          <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center gap-6 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 backdrop-blur-sm" style={{ background: 'rgba(5,5,15,0.97)' }}>
             <div className="text-center animate-slide-up max-w-[400px] p-4">
-              <div className="font-dm-serif text-[clamp(2.5rem,7vw,4rem)] tracking-[-1px] text-white">
-                Bien <span className="italic text-[#c0392b]">joué !</span>
+              <div className="font-dm-serif text-white" style={{ fontSize: 'clamp(2.5rem,7vw,4rem)', letterSpacing: '-0.01em' }}>
+                Bien <span style={{ color: '#bf00ff' }}>joué !</span>
               </div>
-              <div className="text-[0.7rem] tracking-[2px] text-[#888888] uppercase mt-2">
+              <div className="text-[0.7rem] tracking-[2px] uppercase mt-2" style={{ color: '#555' }}>
                 {moves} essais · {time}s · {totalPairs} paires
               </div>
-              <div className="text-[0.6rem] text-[#888888] mt-1 italic">
+              <div className="text-[0.6rem] mt-1 italic" style={{ color: '#555' }}>
                 {!secretFound && '(paire mystère non trouvée…)'}
               </div>
-              
-              <hr className="w-[40px] border-none border-t-2 border-[#333] my-5 mx-auto" />
-              
+
+              <hr className="w-[40px] border-none border-t my-5 mx-auto" style={{ borderColor: 'rgba(191,0,255,0.3)' }} />
+
               <div className="flex flex-col items-center gap-3">
-                <div className="text-[0.65rem] tracking-[3px] uppercase text-[#888888]">Entrez le code secret</div>
-                <input 
-                  className="font-dm-serif text-[2.5rem] w-[80px] text-center bg-[#111] text-white border-none rounded-lg py-1 px-2 outline-none tracking-[4px] uppercase transition-colors placeholder:text-white/20"
+                <div className="text-[0.65rem] tracking-[3px] uppercase" style={{ color: '#555' }}>Entrez le code secret</div>
+                <input
+                  className="font-dm-serif text-[2.5rem] w-[80px] text-center text-white border-none rounded-lg py-1 px-2 outline-none tracking-[4px] uppercase transition-colors placeholder:text-white/20"
+                  style={{ background: 'rgba(12,12,28,0.9)', boxShadow: '0 0 0 1px rgba(191,0,255,0.3)' }}
                   maxLength="1" 
                   placeholder="?" 
                   autoComplete="off" 
@@ -381,12 +382,12 @@ export default function MemoryGame({
                   autoFocus
                 />
                 <div className={`text-[0.75rem] tracking-[2px] min-h-[1.2rem] transition-colors duration-200 
-                  ${codeFeedback.status === 'wrong' ? 'text-[#c0392b]' : codeFeedback.status === 'right' ? 'text-[#27ae60]' : 'text-[#888888]'}`}
+                  ${codeFeedback.status === 'wrong' ? 'text-[#bf00ff]' : codeFeedback.status === 'right' ? 'text-[#27ae60]' : 'text-[#555]'}`}
                 >
                   {codeFeedback.text}
                 </div>
                 <button 
-                  className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-[#c0392b] bg-[#c0392b] text-white hover:bg-[#a93226] hover:border-[#a93226] active:scale-95 mt-2"
+                  className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-[#bf00ff] bg-[#bf00ff] text-white hover:bg-[#9900cc] hover:border-[#9900cc] active:scale-95 mt-2"
                   onClick={checkCode}
                 >
                   Valider
@@ -394,7 +395,7 @@ export default function MemoryGame({
               </div>
               <br />
               <button 
-                className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-white bg-transparent text-white hover:bg-white hover:text-black active:scale-95"
+                className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border border-[#bf00ff] bg-transparent text-[#bf00ff] hover:bg-[#bf00ff] hover:text-black active:scale-95"
                 onClick={startNewGame}
               >
                 Rejouer
@@ -405,15 +406,15 @@ export default function MemoryGame({
 
         {/* Fail Overlay */}
         {gameStatus === 'failed' && (
-          <div className="fixed inset-0 bg-black/95 z-[150] flex flex-col items-center justify-center gap-4 text-center p-8 backdrop-blur-md">
+          <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center gap-4 text-center p-8 backdrop-blur-md" style={{ background: 'rgba(5,5,15,0.98)' }}>
             <div className="animate-shake-in">
               <span className="text-6xl block mb-2">💥</span>
-              <div className="font-dm-serif text-[clamp(2rem,6vw,3.5rem)] text-[#c0392b] italic tracking-[-1px]">Trop d'essais !</div>
-              <div className="text-[0.7rem] tracking-[3px] uppercase text-[#888888] mt-1.5">Plus de {maxMoves} essais — on repart de zéro</div>
+              <div className="font-dm-serif text-[#bf00ff]" style={{ fontSize: 'clamp(2rem,6vw,3.5rem)', letterSpacing: '-0.01em', textShadow: '0 0 20px rgba(191,0,255,0.4)' }}>Trop d'essais !</div>
+              <div className="text-[0.7rem] tracking-[3px] uppercase mt-1.5" style={{ color: '#555' }}>Plus de {maxMoves} essais — on repart de zéro</div>
             </div>
             <br />
-            <button 
-              className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-[#c0392b] bg-[#c0392b] text-white hover:bg-[#a93226] hover:border-[#a93226] active:scale-95"
+            <button
+              className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border border-[#bf00ff] bg-transparent text-[#bf00ff] hover:bg-[#bf00ff] hover:text-black active:scale-95"
               onClick={startNewGame}
             >
               Recommencer
@@ -423,20 +424,20 @@ export default function MemoryGame({
 
         {/* Secret Overlay */}
         {gameStatus === 'secret' && (
-          <div className="fixed inset-0 bg-[#c0392b] z-[200] flex flex-col items-center justify-center gap-4 text-white text-center p-8">
+          <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-4 text-white text-center p-8" style={{ background: 'rgba(5,5,15,0.98)', borderTop: '2px solid #bf00ff', boxShadow: 'inset 0 0 80px rgba(191,0,255,0.08)' }}>
             <div className="animate-secret-in flex flex-col items-center">
               <span className="text-[3rem] block mb-4 animate-spin-360">🔓</span>
-              <div className="text-[0.65rem] tracking-[5px] uppercase opacity-70 mb-4">✦ Code correct ✦</div>
-              <div className="font-dm-serif text-[clamp(1.6rem,5vw,2.8rem)] leading-[1.25] max-w-[500px] italic">
+              <div className="text-[0.65rem] tracking-[5px] uppercase mb-4" style={{ color: '#bf00ff' }}>✦ Code correct ✦</div>
+              <div className="font-dm-serif leading-[1.25] max-w-[500px]" style={{ fontSize: 'clamp(1.6rem,5vw,2.8rem)', color: '#eee' }}>
                 {joke.setup}
               </div>
-              <div className="font-dm-serif text-[clamp(1rem,3vw,1.6rem)] opacity-85 mt-2">
+              <div className="font-dm-serif mt-2" style={{ fontSize: 'clamp(1rem,3vw,1.6rem)', color: '#aaa' }}>
                 {joke.punchline}
               </div>
             </div>
             <br />
-            <button 
-               className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border-2 border-white bg-transparent text-white hover:bg-white hover:text-[#c0392b] active:scale-95 mt-4"
+            <button
+              className="font-dm-mono text-[0.75rem] tracking-[2px] uppercase rounded-lg py-2.5 px-7 cursor-pointer transition-all duration-150 border border-[#bf00ff] bg-transparent text-[#bf00ff] hover:bg-[#bf00ff] hover:text-black active:scale-95 mt-4"
               onClick={startNewGame}
             >
               Rejouer
