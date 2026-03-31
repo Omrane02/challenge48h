@@ -1,8 +1,7 @@
 Site accessible à l'adresse : 
 
-```
+
 [https://challenge48h-main-alongkornfrs-projects.vercel.app/](https://challenge48h-main-alongkornfrs-projects.vercel.app/)
-```
 
 ## Getting Started
 
