@@ -402,7 +402,9 @@ export default function QuestGame({ onBack, onWin }) {
 .qg-enter-d1 { animation: qg-fadeUp 0.5s 0.08s cubic-bezier(0.22,1,0.36,1) both; }
 .qg-enter-d2 { animation: qg-fadeUp 0.5s 0.16s cubic-bezier(0.22,1,0.36,1) both; }
 .qg-enter-d3 { animation: qg-fadeUp 0.5s 0.24s cubic-bezier(0.22,1,0.36,1) both; }`}</style>
-      <div className="min-h-screen bg-[#05050f] flex flex-col items-center justify-center gap-7 px-4 py-10">
+      <div className="min-h-screen bg-[#05050f] flex flex-col items-center justify-center gap-7 px-4 py-10 relative">
+        <div className="fixed inset-0 pointer-events-none z-0" style={{ background: 'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,208,0,0.04) 39px,rgba(255,208,0,0.04) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,208,0,0.04) 39px,rgba(255,208,0,0.04) 40px)' }} />
+        <div className="fixed inset-0 pointer-events-none z-0" style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(255,208,0,0.06) 0%, transparent 65%)' }} />
 
         {/* Title */}
         <div className="qg-enter text-center space-y-2">

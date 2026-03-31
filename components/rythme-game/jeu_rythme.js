@@ -556,7 +556,9 @@ export default function RhythmGame({ onWin, onBack }) {
 
         {/* ── Screen: idle ── */}
         {gameState === 'idle' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-[100] gap-3.5" style={{ background: 'rgba(5,5,15,0.96)' }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-[100] gap-3.5" style={{ background: 'rgba(5,5,15,0.97)' }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(0,229,255,0.04) 39px,rgba(0,229,255,0.04) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(0,229,255,0.04) 39px,rgba(0,229,255,0.04) 40px)' }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(0,229,255,0.06) 0%, transparent 65%)' }} />
             <h1 className="rg-enter" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#00e5ff', textShadow: '0 0 25px rgba(0,229,255,0.6)', letterSpacing: '0.15em', margin: 0 }}>
               RHYTHM RUSH
             </h1>

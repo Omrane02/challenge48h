@@ -271,6 +271,8 @@ export default function MemoryGame({
       <>
         <style>{styles}</style>
         <div className="flex flex-col items-center font-dm-mono text-white py-10 px-4 min-h-screen box-border relative justify-center" style={{ background: '#05050f' }}>
+          <div className="fixed inset-0 pointer-events-none z-0" style={{ background: 'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(191,0,255,0.04) 39px,rgba(191,0,255,0.04) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(191,0,255,0.04) 39px,rgba(191,0,255,0.04) 40px)' }} />
+          <div className="fixed inset-0 pointer-events-none z-0" style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(191,0,255,0.06) 0%, transparent 65%)' }} />
 
           {/* Title */}
           <div className="mg-enter text-center mb-8">

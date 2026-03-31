@@ -624,11 +624,259 @@ function SecretCodeSection() {
   );
 }
 
+/* ─── Timer helpers ─── */
+const TIMER_DURATION = 12 * 60; // 720 seconds
+
+function formatTimer(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function TimerWidget({ timeLeft, running, onToggle, onReset, compact = false }) {
+  const danger = timeLeft < 60;
+  const warning = timeLeft < 180;
+  const color = danger ? '#ff0040' : warning ? '#ffd000' : '#00e5ff';
+  const pct = (timeLeft / TIMER_DURATION) * 100;
+  const finished = timeLeft === 0;
+
+  if (compact) {
+    return (
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+        style={{
+          background: 'rgba(4,4,12,0.9)',
+          border: `1px solid ${color}40`,
+          boxShadow: `0 0 10px ${color}20`,
+          fontFamily: "'Share Tech Mono', monospace",
+        }}
+      >
+        <span style={{ fontSize: '10px', color: '#444', letterSpacing: '2px' }}>⏱</span>
+        <span
+          style={{
+            fontSize: '15px',
+            fontWeight: 700,
+            color,
+            letterSpacing: '2px',
+            textShadow: danger ? `0 0 10px ${color}` : 'none',
+            fontFamily: "'Bebas Neue', sans-serif",
+          }}
+        >
+          {formatTimer(timeLeft)}
+        </span>
+        <button
+          onClick={onToggle}
+          title={running ? 'Pause' : 'Lancer'}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: running ? color : '#555', fontSize: '11px', padding: '0 2px', lineHeight: 1 }}
+          onMouseEnter={e => e.currentTarget.style.color = color}
+          onMouseLeave={e => e.currentTarget.style.color = running ? color : '#555'}
+        >
+          {running ? '⏸' : '▶'}
+        </button>
+        <button
+          onClick={onReset}
+          title="Reset"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: '11px', padding: '0 2px', lineHeight: 1 }}
+          onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+          onMouseLeave={e => e.currentTarget.style.color = '#444'}
+        >
+          ↺
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed top-5 right-5 z-50 flex flex-col items-center gap-1.5"
+      style={{ fontFamily: "'Share Tech Mono', monospace" }}
+    >
+      <div
+        className="px-4 py-3 rounded-xl flex flex-col items-center gap-1.5"
+        style={{
+          background: 'rgba(4,4,12,0.92)',
+          border: `1px solid ${color}35`,
+          boxShadow: `0 0 20px ${color}15, inset 0 0 20px rgba(0,0,0,0.3)`,
+          minWidth: '120px',
+        }}
+      >
+        <span style={{ fontSize: '9px', color: '#444', letterSpacing: '3px', textTransform: 'uppercase' }}>
+          {finished ? 'TEMPS ÉCOULÉ' : running ? 'En cours' : 'En pause'}
+        </span>
+        <span
+          style={{
+            fontSize: '34px',
+            lineHeight: 1,
+            fontFamily: "'Bebas Neue', sans-serif",
+            letterSpacing: '3px',
+            color,
+            textShadow: danger ? `0 0 16px ${color}` : warning ? `0 0 10px ${color}60` : 'none',
+          }}
+        >
+          {formatTimer(timeLeft)}
+        </span>
+        {/* Progress bar */}
+        <div className="w-full rounded-full mt-0.5" style={{ height: '2px', background: 'rgba(255,255,255,0.06)' }}>
+          <div
+            className="h-full rounded-full transition-[width] duration-1000 ease-linear"
+            style={{ width: `${pct}%`, background: color, boxShadow: `0 0 6px ${color}` }}
+          />
+        </div>
+        {/* Controls */}
+        <div className="flex gap-2 mt-1 w-full">
+          <button
+            onClick={onToggle}
+            disabled={finished}
+            className="flex-1 py-1 rounded text-center transition-all duration-100 cursor-pointer"
+            style={{
+              fontSize: '10px',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              background: running ? `${color}18` : 'transparent',
+              border: `1px solid ${finished ? '#333' : color}50`,
+              color: finished ? '#333' : color,
+              cursor: finished ? 'not-allowed' : 'pointer',
+            }}
+            onMouseEnter={e => { if (!finished) e.currentTarget.style.background = `${color}28`; }}
+            onMouseLeave={e => { e.currentTarget.style.background = running ? `${color}18` : 'transparent'; }}
+          >
+            {running ? '⏸ Pause' : '▶ Start'}
+          </button>
+          <button
+            onClick={onReset}
+            className="px-2 py-1 rounded transition-all duration-100 cursor-pointer"
+            style={{
+              fontSize: '12px',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: '#555',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+          >
+            ↺
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Music Control ─── */
+function MusicControl({ audioRef, playing, onToggle, volume, onVolume }) {
+  const [expanded, setExpanded] = useState(false);
+  const color = '#00e5ff';
+
+  return (
+    <div
+      className="fixed bottom-5 left-5 z-50 flex flex-col-reverse items-center gap-2"
+      style={{ fontFamily: "'Share Tech Mono', monospace" }}
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+    >
+      {/* Volume slider — visible on hover */}
+      {expanded && (
+        <div
+          className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl"
+          style={{ background: 'rgba(4,4,12,0.92)', border: `1px solid ${color}30`, boxShadow: `0 0 16px ${color}12` }}
+        >
+          <span style={{ fontSize: '9px', color: '#444', letterSpacing: '2px', textTransform: 'uppercase' }}>Vol</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={volume}
+            onChange={e => onVolume(parseFloat(e.target.value))}
+            style={{
+              writingMode: 'vertical-lr',
+              direction: 'rtl',
+              height: '70px',
+              width: '4px',
+              accentColor: color,
+              cursor: 'pointer',
+            }}
+          />
+        </div>
+      )}
+
+      {/* Main button */}
+      <button
+        onClick={onToggle}
+        className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
+        style={{
+          background: playing ? `${color}18` : 'rgba(4,4,12,0.92)',
+          border: `1px solid ${playing ? color + '50' : 'rgba(255,255,255,0.1)'}`,
+          boxShadow: playing ? `0 0 14px ${color}25` : 'none',
+          fontSize: '16px',
+        }}
+        title={playing ? 'Couper la musique' : 'Lancer la musique'}
+      >
+        {playing ? '♫' : '♩'}
+      </button>
+    </div>
+  );
+}
+
 /* ─── Main App ─── */
 function App() {
   const [currentGame, setCurrentGame] = useState(null);
   const [unlockedLevel, setUnlockedLevel] = useState(1);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.4);
+  const audioRef = useRef(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    const audio = new Audio('/fond.mp3');
+    audio.loop = true;
+    audio.volume = musicVolume;
+    audioRef.current = audio;
+    // Try autoplay
+    audio.play().then(() => setMusicPlaying(true)).catch(() => {});
+    return () => { audio.pause(); audio.src = ''; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleMusicToggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (musicPlaying) {
+      audio.pause();
+      setMusicPlaying(false);
+    } else {
+      audio.play();
+      setMusicPlaying(true);
+    }
+  };
+
+  const handleMusicVolume = (v) => {
+    setMusicVolume(v);
+    if (audioRef.current) audioRef.current.volume = v;
+  };
+
+  useEffect(() => {
+    if (timerRunning) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 0) { clearInterval(timerRef.current); setTimerRunning(false); return 0; }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [timerRunning]);
+
+  const handleTimerToggle = () => setTimerRunning(r => !r);
+  const handleTimerReset = () => {
+    setTimerRunning(false);
+    setTimeLeft(TIMER_DURATION);
+  };
 
   useEffect(() => {
     const savedProgress = localStorage.getItem('arcadeProgress');
@@ -660,44 +908,14 @@ function App() {
   /* ── In-game view ── */
   if (currentGame) {
     const GameComponent = GAMES.find(g => g.id === currentGame)?.component;
-    const game = GAMES.find(g => g.id === currentGame);
     return (
-      <div className="min-h-screen bg-[#05050f] text-white flex flex-col">
-        <div
-          className="px-5 py-3 flex justify-between items-center border-b"
-          style={{ borderColor: `${game.accent}20`, background: 'rgba(4,4,12,0.95)' }}
-        >
-          <button
-            onClick={() => setCurrentGame(null)}
-            className="flex items-center gap-2 font-mono text-xs tracking-widest uppercase transition-colors"
-            style={{ color: '#555' }}
-            onMouseEnter={e => e.currentTarget.style.color = game.accent}
-            onMouseLeave={e => e.currentTarget.style.color = '#555'}
-          >
-            ← ARCADE
-          </button>
-          <span
-            className="font-mono text-xs tracking-[0.3em] uppercase"
-            style={{ color: game.accent }}
-          >
-            {game.tag}
-          </span>
-          <button
-            onClick={handleWin}
-            className="font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 rounded border transition-all"
-            style={{
-              borderColor: 'rgba(255,255,255,0.1)',
-              color: '#444',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = game.accent; e.currentTarget.style.color = game.accent; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#444'; }}
-          >
-            [Dev] Win
-          </button>
+      <div className="min-h-screen bg-[#05050f] text-white relative">
+        {/* Floating timer — top right */}
+        <div className="fixed top-4 right-4 z-50">
+          <TimerWidget timeLeft={timeLeft} running={timerRunning} onToggle={handleTimerToggle} onReset={handleTimerReset} compact />
         </div>
-        <div className="flex-grow relative">
-          <GameComponent onWin={handleWin} onBack={() => setCurrentGame(null)} />
-        </div>
+        <MusicControl audioRef={audioRef} playing={musicPlaying} onToggle={handleMusicToggle} volume={musicVolume} onVolume={handleMusicVolume} />
+        <GameComponent onWin={handleWin} onBack={() => setCurrentGame(null)} />
       </div>
     );
   }
@@ -708,6 +926,8 @@ function App() {
   return (
     <>
       <MailboxPanel unlockedLevel={unlockedLevel} />
+      <TimerWidget timeLeft={timeLeft} running={timerRunning} onToggle={handleTimerToggle} onReset={handleTimerReset} />
+      <MusicControl audioRef={audioRef} playing={musicPlaying} onToggle={handleMusicToggle} volume={musicVolume} onVolume={handleMusicVolume} />
       {/* Global styles injected inline */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');
