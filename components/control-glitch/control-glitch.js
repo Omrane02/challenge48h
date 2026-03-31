@@ -347,12 +347,12 @@ function playBeep(type) {
 }
 
 function getPerformance(score) {
-  if (score > 250) return { grade: 'S', rank: 'UNHACKABLE', message: "Tu n'as pas cédé une seule fois. Le système ne peut rien contre toi.", color: '#39ff14' };
-  if (score > 150) return { grade: 'A', rank: 'GLITCH MASTER', message: 'Le système a essayé fort. Tu as su résister à presque tout.', color: '#00cfff' };
-  if (score > 70) return { grade: 'B', rank: 'RÉSISTANCE CORRECTE', message: "Quelques pièges t'ont eu, mais tu t'en es plutôt bien sorti.", color: '#ffcc00' };
-  if (score > 10) return { grade: 'C', rank: 'FACILEMENT PIÉGÉ', message: 'Le glitch a bien joué avec ta tête. Tu as cru trop de choses.', color: '#ff8800' };
-  if (score > -20) return { grade: 'D', rank: 'TROP CRÉDULE', message: "Tu as tout cru. Sans hésiter. Le système t'a possédé.", color: '#ff4400' };
-  return { grade: 'F', rank: 'TOTAL CHAOS', message: "Le glitch a pris le contrôle total. Tu n'existais plus.", color: '#ff0040' };
+  if (score > 250) return { grade: 'U', rank: 'UNHACKABLE', message: "Tu n'as pas cédé une seule fois. Le système ne peut rien contre toi.", color: '#39ff14' };
+  if (score > 150) return { grade: 'U', rank: 'GLITCH MASTER', message: 'Le système a essayé fort. Tu as su résister à presque tout.', color: '#00cfff' };
+  if (score > 70) return { grade: 'U', rank: 'RÉSISTANCE CORRECTE', message: "Quelques pièges t'ont eu, mais tu t'en es plutôt bien sorti.", color: '#ffcc00' };
+  if (score > 10) return { grade: 'U', rank: 'FACILEMENT PIÉGÉ', message: 'Le glitch a bien joué avec ta tête. Tu as cru trop de choses.', color: '#ff8800' };
+  if (score > -20) return { grade: 'U', rank: 'TROP CRÉDULE', message: "Tu as tout cru. Sans hésiter. Le système t'a possédé.", color: '#ff4400' };
+  return { grade: 'U', rank: 'TOTAL CHAOS', message: "Le glitch a pris le contrôle total. Tu n'existais plus.", color: '#ff0040' };
 }
 
 
