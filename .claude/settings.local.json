@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(curl -sL \"https://www.youtube.com/oembed?url=https://youtu.be/a79hQ4HMvFU&format=json\")",
+      "Bash(curl -sL \"https://www.youtube.com/watch?v=a79hQ4HMvFU\")"
     ]
   }
 }

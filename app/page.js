@@ -818,8 +818,86 @@ function MusicControl({ audioRef, playing, onToggle, volume, onVolume }) {
   );
 }
 
+/* ─── Youtube Intro ─── */
+function YoutubeIntro({ onEnd }) {
+  const [started, setStarted] = useState(false);
+  const playerRef = useRef(null);
+
+  useEffect(() => {
+    if (!started) return;
+
+    const initPlayer = () => {
+      playerRef.current = new window.YT.Player('yt-intro-player', {
+        events: {
+          onReady: (e) => {
+            e.target.setVolume(50);
+            e.target.setPlaybackQuality('hd1080');
+            e.target.playVideo();
+          },
+          onStateChange: (e) => {
+            if (e.data === 0) onEnd();
+          },
+        },
+      });
+    };
+
+    if (window.YT && window.YT.Player) {
+      initPlayer();
+    } else {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+      window.onYouTubeIframeAPIReady = initPlayer;
+    }
+
+    return () => { delete window.onYouTubeIframeAPIReady; };
+  }, [started, onEnd]);
+
+  if (!started) {
+    return (
+      <div
+        className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center gap-6 cursor-pointer"
+        onClick={() => setStarted(true)}
+      >
+        <div className="text-center">
+          <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#444', fontSize: '0.65rem', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>✦ challenge 48h ✦</p>
+          <button
+            className="px-10 py-4 rounded-lg border text-white tracking-widest uppercase text-sm transition-all"
+            style={{ fontFamily: "'Share Tech Mono', monospace", background: 'transparent', borderColor: 'rgba(255,255,255,0.25)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; }}
+          >
+            ▶ Lancer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black">
+      <iframe
+        id="yt-intro-player"
+        src="https://www.youtube.com/embed/a79hQ4HMvFU?autoplay=1&controls=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&vq=hd1080"
+        allow="autoplay; encrypted-media"
+        style={{ width: '100%', height: '100%', border: 'none' }}
+      />
+      <button
+        onClick={onEnd}
+        className="fixed bottom-8 right-8 text-[0.75rem] tracking-widest uppercase px-4 py-2 rounded border cursor-pointer transition-all"
+        style={{ color: 'rgba(255,255,255,0.4)', borderColor: 'rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.5)' }}
+        onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'; }}
+        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+      >
+        Passer →
+      </button>
+    </div>
+  );
+}
+
 /* ─── Main App ─── */
 function App() {
+  const [showIntro, setShowIntro] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
   const [unlockedLevel, setUnlockedLevel] = useState(1);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -838,6 +916,7 @@ function App() {
     memory: '/memory_game.mp3',
     quest: '/arrow_quest.mp3',
     mirror: '/mirror.mp3',
+    tune: '/son tune switch.mp3',
   };
 
   useEffect(() => {
@@ -845,11 +924,18 @@ function App() {
     audio.loop = true;
     audio.volume = musicVolume;
     audioRef.current = audio;
-    // Try autoplay
-    audio.play().then(() => setMusicPlaying(true)).catch(() => {});
+    if (!showIntro) {
+      audio.play().then(() => setMusicPlaying(true)).catch(() => {});
+    }
     return () => { audio.pause(); audio.src = ''; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!showIntro && audioRef.current) {
+      audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
+    }
+  }, [showIntro]);
 
   useEffect(() => {
     if (!currentGame) return; // lancement initial : la musique de fond gère elle-même son play()
@@ -947,6 +1033,11 @@ function App() {
       localStorage.setItem('arcadeProgress', newLevel);
     }
   };
+
+  /* ── Intro video ── */
+  if (showIntro) {
+    return <YoutubeIntro onEnd={() => setShowIntro(false)} />;
+  }
 
   if (!isLoaded) return null;
 
@@ -1182,18 +1273,31 @@ function App() {
           {/* ── Secret Code ── */}
           <SecretCodeSection />
 
-          {/* ── Reset ── */}
-          {unlockedLevel > 1 && (
-            <button
-              onClick={() => { localStorage.removeItem('arcadeProgress'); setUnlockedLevel(1); }}
-              className="mt-20 text-[10px] tracking-widest uppercase transition-colors"
-              style={{ color: '#222' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#ff0040'}
-              onMouseLeave={e => e.currentTarget.style.color = '#222'}
-            >
-              ↺ Réinitialiser la progression
-            </button>
-          )}
+          {/* ── Dev / Reset ── */}
+          <div className="mt-20 flex items-center gap-4">
+            {unlockedLevel < GAMES.length + 1 && (
+              <button
+                onClick={() => { const v = GAMES.length + 1; setUnlockedLevel(v); localStorage.setItem('arcadeProgress', v); }}
+                className="text-[10px] tracking-widest uppercase transition-colors px-3 py-1 rounded border"
+                style={{ color: '#f0a500', borderColor: 'rgba(240,165,0,0.3)', background: 'rgba(240,165,0,0.05)' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(240,165,0,0.15)'; e.currentTarget.style.borderColor = '#f0a500'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(240,165,0,0.05)'; e.currentTarget.style.borderColor = 'rgba(240,165,0,0.3)'; }}
+              >
+                ⚡ DEV — Tout débloquer
+              </button>
+            )}
+            {unlockedLevel > 1 && (
+              <button
+                onClick={() => { localStorage.removeItem('arcadeProgress'); setUnlockedLevel(1); }}
+                className="text-[10px] tracking-widest uppercase transition-colors"
+                style={{ color: '#222' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#ff0040'}
+                onMouseLeave={e => e.currentTarget.style.color = '#222'}
+              >
+                ↺ Réinitialiser
+              </button>
+            )}
+          </div>
         </div>
 
       </div>

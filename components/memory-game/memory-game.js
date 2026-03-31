@@ -105,7 +105,7 @@ function shuffle(array) {
 
 export default function MemoryGame({
   totalPairs = 12,
-  maxMoves = 15,
+  maxMoves = 20,
   secretEmoji = '🦊',
   secretLetter = 'Z',
   onWin,

@@ -481,6 +481,8 @@ function GameBoard({ onGameEnd }) {
   
   const prevPhaseRef = useRef(0);
   const scoreRef = useRef(0);
+  const onGameEndRef = useRef(onGameEnd);
+  useEffect(() => { onGameEndRef.current = onGameEnd; }, [onGameEnd]);
 
   const currentPhase = getPhase(timeLeft);
   const phaseColor = PHASE_COLORS[currentPhase];
@@ -490,12 +492,12 @@ function GameBoard({ onGameEnd }) {
 
   useEffect(() => {
     if (timeLeft <= 0) {
-      onGameEnd(scoreRef.current);
+      onGameEndRef.current(scoreRef.current);
       return;
     }
     const id = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(id);
-  }, [timeLeft, onGameEnd]);
+  }, [timeLeft]);
 
   useEffect(() => {
     if (prevPhaseRef.current === 0) {
@@ -713,11 +715,11 @@ export default function ControlGlitch({ onWin, onBack }) {
   const [gameState, setGameState] = useState('home'); // 'home' | 'playing' | 'ended'
   const [finalScore, setFinalScore] = useState(0);
 
-  function handleGameEnd(score) {
+  const handleGameEnd = useCallback((score) => {
     setFinalScore(score);
     setGameState('ended');
     if (onWin) onWin();
-  }
+  }, [onWin]);
 
   if (gameState === 'playing') {
     return (
