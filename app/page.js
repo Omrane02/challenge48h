@@ -769,7 +769,7 @@ function MusicControl({ audioRef, playing, onToggle, volume, onVolume }) {
 
   return (
     <div
-      className="fixed bottom-5 left-5 z-50 flex flex-col-reverse items-center gap-2"
+      className="fixed bottom-5 right-5 z-50 flex flex-col-reverse items-center gap-2"
       style={{ fontFamily: "'Share Tech Mono', monospace" }}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
@@ -899,6 +899,7 @@ function YoutubeIntro({ onEnd }) {
 function App() {
   const [showIntro, setShowIntro] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
+  const [devFlash, setDevFlash] = useState(false);
   const [unlockedLevel, setUnlockedLevel] = useState(1);
   const [isLoaded, setIsLoaded] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
@@ -909,6 +910,24 @@ function App() {
   const gameAudioRef = useRef(null);
   const bgWasPlayingRef = useRef(false);
   const timerRef = useRef(null);
+  const konamiRef = useRef([]);
+  const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+
+  useEffect(() => {
+    const handler = (e) => {
+      const seq = [...konamiRef.current, e.key].slice(-KONAMI.length);
+      konamiRef.current = seq;
+      if (seq.join(',') === KONAMI.join(',')) {
+        const v = GAMES.length + 1;
+        setUnlockedLevel(v);
+        localStorage.setItem('arcadeProgress', v);
+        setDevFlash(true);
+        setTimeout(() => setDevFlash(false), 1500);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const GAME_MUSIC = {
     rhythm: '/rythme_game.mp3',
@@ -1061,6 +1080,13 @@ function App() {
 
   return (
     <>
+      {devFlash && (
+        <div className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center" style={{ background: 'rgba(240,165,0,0.08)', animation: 'none' }}>
+          <div className="text-center" style={{ fontFamily: "'Share Tech Mono', monospace", color: '#f0a500', fontSize: '1.1rem', letterSpacing: '0.3em', textTransform: 'uppercase', textShadow: '0 0 20px #f0a500' }}>
+            ⚡ ALL UNLOCKED ⚡
+          </div>
+        </div>
+      )}
       <MailboxPanel unlockedLevel={unlockedLevel} />
       <TimerWidget timeLeft={timeLeft} running={timerRunning} onToggle={handleTimerToggle} onReset={handleTimerReset} />
       <MusicControl audioRef={audioRef} playing={musicPlaying} onToggle={handleMusicToggle} volume={musicVolume} onVolume={handleMusicVolume} />
@@ -1273,19 +1299,8 @@ function App() {
           {/* ── Secret Code ── */}
           <SecretCodeSection />
 
-          {/* ── Dev / Reset ── */}
+          {/* ── Reset ── */}
           <div className="mt-20 flex items-center gap-4">
-            {unlockedLevel < GAMES.length + 1 && (
-              <button
-                onClick={() => { const v = GAMES.length + 1; setUnlockedLevel(v); localStorage.setItem('arcadeProgress', v); }}
-                className="text-[10px] tracking-widest uppercase transition-colors px-3 py-1 rounded border"
-                style={{ color: '#f0a500', borderColor: 'rgba(240,165,0,0.3)', background: 'rgba(240,165,0,0.05)' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(240,165,0,0.15)'; e.currentTarget.style.borderColor = '#f0a500'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(240,165,0,0.05)'; e.currentTarget.style.borderColor = 'rgba(240,165,0,0.3)'; }}
-              >
-                ⚡ DEV — Tout débloquer
-              </button>
-            )}
             {unlockedLevel > 1 && (
               <button
                 onClick={() => { localStorage.removeItem('arcadeProgress'); setUnlockedLevel(1); }}
