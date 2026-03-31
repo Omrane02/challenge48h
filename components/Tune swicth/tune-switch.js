@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const NUM_STRINGS = 4;       // Number of guitar strings
-const GAME_DURATION = 120;   // Total game duration in seconds
+const GAME_DURATION = 60;    // Total game duration in seconds
 const REWARD_LETTER = 'I';   // Fragment shown on victory (part of the final password)
 
 // The keyboard keys mapped to each string
@@ -45,7 +45,7 @@ function formatTime(seconds) {
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────
-export default function TuneSwitch({ onWin }) {
+export default function TuneSwitch({ onWin, onBack }) {
 
   // ── Screen state: 'idle' | 'playing' | 'win' | 'lose' ───────────────────
   const [screen, setScreen] = useState('idle');
@@ -211,7 +211,7 @@ export default function TuneSwitch({ onWin }) {
 
       // Advance level every 24 seconds
       const elapsed  = GAME_DURATION - newTime;
-      const newLevel = Math.min(5, Math.floor(elapsed / 24) + 1);
+      const newLevel = Math.min(5, Math.floor(elapsed / 12) + 1);
       if (newLevel !== levelRef.current) {
         levelRef.current = newLevel;
         setLevel(newLevel);
@@ -284,6 +284,15 @@ export default function TuneSwitch({ onWin }) {
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
   return (
+    <>
+    <style>{`
+      @keyframes ts-fadeUp { from { opacity:0; transform:translateY(22px);} to { opacity:1; transform:translateY(0);} }
+      .ts-enter    { animation: ts-fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+      .ts-enter-d1 { animation: ts-fadeUp 0.5s 0.07s cubic-bezier(0.22,1,0.36,1) both; }
+      .ts-enter-d2 { animation: ts-fadeUp 0.5s 0.14s cubic-bezier(0.22,1,0.36,1) both; }
+      .ts-enter-d3 { animation: ts-fadeUp 0.5s 0.21s cubic-bezier(0.22,1,0.36,1) both; }
+      .ts-enter-d4 { animation: ts-fadeUp 0.5s 0.28s cubic-bezier(0.22,1,0.36,1) both; }
+    `}</style>
     <div className={`min-h-screen flex flex-col items-center justify-center font-mono transition-colors duration-300 relative overflow-hidden
       ${wrongFlash ? 'bg-red-950' : 'bg-[#0a0a14]'}
     `}>
@@ -319,18 +328,18 @@ export default function TuneSwitch({ onWin }) {
         {screen === 'idle' && (
           <>
             {/* Title */}
-            <h1 className="text-5xl font-black uppercase tracking-widest text-center"
+            <h1 className="ts-enter text-5xl font-black uppercase tracking-widest text-center"
               style={{ background: 'linear-gradient(to right, #facc15, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
             >
               Tune Switch
             </h1>
-            <p className="text-gray-400 text-center text-sm leading-relaxed">
+            <p className="ts-enter-d1 text-gray-400 text-center text-sm leading-relaxed">
               Accorde les cordes avant qu'elles cassent !<br/>
               Mais attention — les touches changent de place en cours de jeu…
             </p>
 
             {/* Rules */}
-            <div className="w-full bg-gray-900/80 border border-gray-800 rounded-2xl p-5 text-sm space-y-3">
+            <div className="ts-enter-d2 w-full bg-gray-900/80 border border-gray-800 rounded-2xl p-5 text-sm space-y-3">
               <p className="flex items-start gap-3 text-gray-300">
                 <span className="text-green-400 text-lg leading-none">●</span>
                 <span><strong className="text-white">Corde verte</strong> — tout va bien, ne touche pas à sa touche !</span>
@@ -350,7 +359,7 @@ export default function TuneSwitch({ onWin }) {
             </div>
 
             {/* Default key mapping preview */}
-            <div className="w-full">
+            <div className="ts-enter-d3 w-full">
               <p className="text-xs text-gray-500 uppercase tracking-widest mb-3 text-center">
                 Touches au départ
               </p>
@@ -375,6 +384,17 @@ export default function TuneSwitch({ onWin }) {
             >
               ▶  Jouer
             </button>
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-widest transition-colors"
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#555' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+              >
+                ← ARCADE
+              </button>
+            )}
           </>
         )}
 
@@ -462,21 +482,21 @@ export default function TuneSwitch({ onWin }) {
         ══════════════════════════════════════════════════════════════════ */}
         {screen === 'win' && (
           <div className="flex flex-col items-center gap-6 text-center">
-            <div className="text-6xl">🎸</div>
-            <h2 className="text-5xl font-black uppercase tracking-widest"
+            <div className="ts-enter text-6xl">🎸</div>
+            <h2 className="ts-enter-d1 text-5xl font-black uppercase tracking-widest"
               style={{ background: 'linear-gradient(to right, #facc15, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
             >
               Bravo !
             </h2>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Tu as tenu les 2 minutes sans jamais rater une corde.<br/>
+              Tu as tenu la minute sans jamais rater une corde.<br/>
               Tu mérites ce fragment de mot de passe.
             </p>
 
             <div className="text-3xl font-black text-yellow-400">{score} pts</div>
 
             {/* Reward fragment */}
-            <div className="mt-2 px-10 py-5 bg-yellow-500/10 border-2 border-yellow-500 rounded-2xl flex flex-col items-center gap-2">
+            <div className="ts-enter-d2 mt-2 px-10 py-5 bg-yellow-500/10 border-2 border-yellow-500 rounded-2xl flex flex-col items-center gap-2">
               <div className="text-xs text-yellow-500/70 uppercase tracking-widest">Fragment débloqué</div>
               <div className="text-7xl font-black text-yellow-400" style={{ letterSpacing: '14px' }}>
                 {REWARD_LETTER}
@@ -490,6 +510,17 @@ export default function TuneSwitch({ onWin }) {
             >
               ← Retour au menu
             </button>
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-widest transition-colors"
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#555' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+              >
+                ← ARCADE
+              </button>
+            )}
           </div>
         )}
 
@@ -498,13 +529,13 @@ export default function TuneSwitch({ onWin }) {
         ══════════════════════════════════════════════════════════════════ */}
         {screen === 'lose' && (
           <div className="flex flex-col items-center gap-5 text-center">
-            <div className="text-6xl">💥</div>
-            <h2 className="text-5xl font-black uppercase tracking-widest text-red-500">
+            <div className="ts-enter text-6xl">💥</div>
+            <h2 className="ts-enter-d1 text-5xl font-black uppercase tracking-widest text-red-500">
               Game Over
             </h2>
-            <p className="text-gray-400 text-sm px-4 leading-relaxed">{loseReason}</p>
+            <p className="ts-enter-d2 text-gray-400 text-sm px-4 leading-relaxed">{loseReason}</p>
 
-            <div className="flex gap-8 mt-1">
+            <div className="ts-enter-d2 flex gap-8 mt-1">
               <div className="text-center">
                 <div className="text-xs text-gray-500 uppercase tracking-widest">Score</div>
                 <div className="text-2xl font-black text-white">{score}</div>
@@ -532,10 +563,22 @@ export default function TuneSwitch({ onWin }) {
             >
               ← Retour au menu
             </button>
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-widest transition-colors"
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#555' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+              >
+                ← ARCADE
+              </button>
+            )}
           </div>
         )}
 
       </div>
     </div>
+    </>
   );
 }

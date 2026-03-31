@@ -225,7 +225,7 @@ function generateChart() {
 const CHART = generateChart();
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function RhythmGame({ onWin }) {
+export default function RhythmGame({ onWin, onBack }) {
   const [gameState,  setGameState]  = useState('idle');
   const [score,      setScore]      = useState(0);
   const [misses,     setMisses]     = useState(0);
@@ -434,7 +434,15 @@ export default function RhythmGame({ onWin }) {
 
   return (
     <>
-    <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');`}</style>
+    <style>{`
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+  @keyframes rg-fadeUp { from { opacity:0; transform:translateY(22px);} to { opacity:1; transform:translateY(0);} }
+  .rg-enter    { animation: rg-fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+  .rg-enter-d1 { animation: rg-fadeUp 0.5s 0.08s cubic-bezier(0.22,1,0.36,1) both; }
+  .rg-enter-d2 { animation: rg-fadeUp 0.5s 0.16s cubic-bezier(0.22,1,0.36,1) both; }
+  .rg-enter-d3 { animation: rg-fadeUp 0.5s 0.24s cubic-bezier(0.22,1,0.36,1) both; }
+  .rg-enter-d4 { animation: rg-fadeUp 0.5s 0.32s cubic-bezier(0.22,1,0.36,1) both; }
+`}</style>
     <div className="flex justify-center items-center min-h-screen bg-[#05050f]" style={{ fontFamily: "'Share Tech Mono', monospace" }}>
       <div className="flex flex-col items-center gap-4">
       <div
@@ -549,13 +557,13 @@ export default function RhythmGame({ onWin }) {
         {/* ── Screen: idle ── */}
         {gameState === 'idle' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-[100] gap-3.5" style={{ background: 'rgba(5,5,15,0.96)' }}>
-            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#00e5ff', textShadow: '0 0 25px rgba(0,229,255,0.6)', letterSpacing: '0.15em', margin: 0 }}>
+            <h1 className="rg-enter" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#00e5ff', textShadow: '0 0 25px rgba(0,229,255,0.6)', letterSpacing: '0.15em', margin: 0 }}>
               RHYTHM RUSH
             </h1>
-            <p className="text-[13px] m-0 text-center px-5 tracking-widest uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>
+            <p className="rg-enter-d1 text-[13px] m-0 text-center px-5 tracking-widest uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>
               Survivez 2 minutes pour révéler la lettre secrète
             </p>
-            <div className="flex gap-5 mt-1">
+            <div className="rg-enter-d2 flex gap-5 mt-1">
               {LANES.map((l, i) => (
                 <div key={i} className="flex flex-col items-center gap-1.5">
                   <ArrowSVG direction={l.key} color={l.color} size={34} />
@@ -565,7 +573,7 @@ export default function RhythmGame({ onWin }) {
                 </div>
               ))}
             </div>
-            <p className="text-[13px] m-0 tracking-wider" style={{ color: 'rgba(0,229,255,0.5)', fontFamily: "'Share Tech Mono', monospace" }}>
+            <p className="rg-enter-d2 text-[13px] m-0 tracking-wider" style={{ color: 'rgba(0,229,255,0.5)', fontFamily: "'Share Tech Mono', monospace" }}>
               {MISS_LIMIT} vies · à vide = -1 vie · +1 vie / {HITS_PER_LIFE} hits
             </p>
             <button
@@ -577,17 +585,28 @@ export default function RhythmGame({ onWin }) {
             >
               ▶ JOUER
             </button>
+            {onBack && (
+              <button
+                className="mt-1 py-2 px-9 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-95"
+                style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.9rem', fontWeight: 600, color: '#555', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                onClick={onBack}
+              >
+                ← ARCADE
+              </button>
+            )}
           </div>
         )}
 
         {/* ── Screen: gameover ── */}
         {gameState === 'gameover' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-[100] gap-3.5" style={{ background: 'rgba(5,5,15,0.96)' }}>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#ff0040', textShadow: '0 0 30px rgba(255,0,64,0.6)', letterSpacing: '0.15em', margin: 0 }}>
+            <h2 className="rg-enter" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#ff0040', textShadow: '0 0 30px rgba(255,0,64,0.6)', letterSpacing: '0.15em', margin: 0 }}>
               GAME OVER
             </h2>
-            <p className="text-[16px] m-0 tracking-widest" style={{ color: '#aaa', fontFamily: "'Share Tech Mono', monospace" }}>Score : {score.toLocaleString()}</p>
-            <p className="text-[13px] m-0 tracking-wider uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>Trop de fautes…</p>
+            <p className="rg-enter-d1 text-[16px] m-0 tracking-widest" style={{ color: '#aaa', fontFamily: "'Share Tech Mono', monospace" }}>Score : {score.toLocaleString()}</p>
+            <p className="rg-enter-d1 text-[13px] m-0 tracking-wider uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>Trop de fautes…</p>
             <button
               className="mt-2 py-3 px-9 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-95"
               style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1rem', fontWeight: 700, color: '#00e5ff', background: 'transparent', border: '1px solid #00e5ff', borderRadius: '6px' }}
@@ -597,18 +616,29 @@ export default function RhythmGame({ onWin }) {
             >
               RECOMMENCER
             </button>
+            {onBack && (
+              <button
+                className="mt-1 py-2 px-9 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-95"
+                style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.9rem', fontWeight: 600, color: '#555', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                onClick={onBack}
+              >
+                ← ARCADE
+              </button>
+            )}
           </div>
         )}
 
         {/* ── Screen: win ── */}
         {gameState === 'win' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-[100] gap-3.5" style={{ background: 'rgba(5,5,15,0.96)' }}>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#00e5ff', textShadow: '0 0 20px rgba(0,229,255,0.6)', letterSpacing: '0.15em', margin: 0 }}>
+            <h2 className="rg-enter" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: '#00e5ff', textShadow: '0 0 20px rgba(0,229,255,0.6)', letterSpacing: '0.15em', margin: 0 }}>
               VICTOIRE !
             </h2>
-            <p className="text-[16px] m-0 tracking-widest" style={{ color: '#aaa', fontFamily: "'Share Tech Mono', monospace" }}>Score : {score.toLocaleString()}</p>
-            <p className="text-[13px] m-0 tracking-wider uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>Tu as survécu aux 2 minutes !</p>
-            <div className="py-3.5 px-9 text-center mt-2" style={{ border: '1px solid rgba(0,229,255,0.4)', borderRadius: '12px', boxShadow: '0 0 24px rgba(0,229,255,0.15)' }}>
+            <p className="rg-enter-d1 text-[16px] m-0 tracking-widest" style={{ color: '#aaa', fontFamily: "'Share Tech Mono', monospace" }}>Score : {score.toLocaleString()}</p>
+            <p className="rg-enter-d1 text-[13px] m-0 tracking-wider uppercase" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>Tu as survécu aux 2 minutes !</p>
+            <div className="rg-enter-d2 py-3.5 px-9 text-center mt-2" style={{ border: '1px solid rgba(0,229,255,0.4)', borderRadius: '12px', boxShadow: '0 0 24px rgba(0,229,255,0.15)' }}>
               <p className="text-[13px] m-0 mb-2 uppercase tracking-widest" style={{ color: '#555', fontFamily: "'Share Tech Mono', monospace" }}>Lettre secrète :</p>
               <span className="block leading-none" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '72px', color: '#00e5ff', textShadow: '0 0 24px rgba(0,229,255,0.6)' }}>
                 {SECRET_LETTER}
@@ -623,6 +653,17 @@ export default function RhythmGame({ onWin }) {
             >
               REJOUER
             </button>
+            {onBack && (
+              <button
+                className="mt-1 py-2 px-9 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-95"
+                style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.9rem', fontWeight: 600, color: '#555', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                onClick={onBack}
+              >
+                ← ARCADE
+              </button>
+            )}
           </div>
         )}
 

@@ -129,6 +129,14 @@ const glitchStyles = `
   @keyframes flash-red { 0% { opacity: 0.55; } 100% { opacity: 0; } }
   .flash-red { animation: flash-red 0.45s ease-out forwards; }
 
+  /* Entrance animations */
+  @keyframes cg-fadeUp { from { opacity:0; transform:translateY(22px);} to { opacity:1; transform:translateY(0);} }
+  .cg-enter    { animation: cg-fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+  .cg-enter-d1 { animation: cg-fadeUp 0.5s 0.08s cubic-bezier(0.22,1,0.36,1) both; }
+  .cg-enter-d2 { animation: cg-fadeUp 0.5s 0.16s cubic-bezier(0.22,1,0.36,1) both; }
+  .cg-enter-d3 { animation: cg-fadeUp 0.5s 0.24s cubic-bezier(0.22,1,0.36,1) both; }
+  .cg-enter-d4 { animation: cg-fadeUp 0.5s 0.32s cubic-bezier(0.22,1,0.36,1) both; }
+
   /* Target Animations */
   @keyframes target-appear {
     0%   { transform: scale(0) rotate(200deg); opacity: 0; }
@@ -609,7 +617,7 @@ function GameBoard({ onGameEnd }) {
   );
 }
 
-function EndScreen({ score, onReplay }) {
+function EndScreen({ score, onReplay, onBack }) {
   const perf = getPerformance(score);
   const [visible, setVisible] = useState(false);
   const [countedScore, setCountedScore] = useState(0);
@@ -647,14 +655,14 @@ function EndScreen({ score, onReplay }) {
       <div className="absolute bottom-8 right-8 w-16 h-16 border-b-2 border-r-2 opacity-30" style={{ borderColor: perf.color }} />
 
       <div className="relative z-10 text-center w-full max-w-lg transition-all duration-700" style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(24px)' }}>
-        <div className="font-mono text-xs tracking-[0.4em] text-gray-600 mb-8 uppercase">▸ GAME OVER ◂</div>
-        <div className="font-orbitron text-[9rem] font-black leading-none mb-2 glitch-grade select-none" style={{ color: perf.color, textShadow: `0 0 60px ${perf.color}50` }} data-text={perf.grade}>
+        <div className="cg-enter font-mono text-xs tracking-[0.4em] text-gray-600 mb-8 uppercase">▸ GAME OVER ◂</div>
+        <div className="cg-enter-d1 font-orbitron text-[9rem] font-black leading-none mb-2 glitch-grade select-none" style={{ color: perf.color, textShadow: `0 0 60px ${perf.color}50` }} data-text={perf.grade}>
           {perf.grade}
         </div>
-        <div className="font-orbitron text-lg font-bold tracking-[0.15em] uppercase mb-3" style={{ color: perf.color }}>{perf.rank}</div>
+        <div className="cg-enter-d2 font-orbitron text-lg font-bold tracking-[0.15em] uppercase mb-3" style={{ color: perf.color }}>{perf.rank}</div>
         <p className="font-mono text-sm text-gray-400 leading-relaxed mb-10 max-w-xs mx-auto">{perf.message}</p>
 
-        <div className="inline-block border rounded-sm px-12 py-6 mb-8" style={{ borderColor: perf.color + '40', background: perf.color + '06' }}>
+        <div className="cg-enter-d3 inline-block border rounded-sm px-12 py-6 mb-8" style={{ borderColor: perf.color + '40', background: perf.color + '06' }}>
           <div className="font-mono text-[10px] tracking-[0.3em] text-gray-600 mb-3 uppercase">Score Final</div>
           <div className="font-orbitron text-6xl font-black tabular-nums leading-none" style={{ color: score < 0 ? '#ff0040' : '#ffffff', textShadow: score < 0 ? '0 0 20px #ff004080' : '0 0 20px rgba(255,255,255,0.2)' }}>
             {countedScore}
@@ -662,7 +670,7 @@ function EndScreen({ score, onReplay }) {
           <div className="font-mono text-xs text-gray-600 mt-2">pts</div>
         </div>
 
-        <div className="border border-white/5 rounded-sm p-4 mb-10 text-left bg-white/[0.02]">
+        <div className="cg-enter-d4 border border-white/5 rounded-sm p-4 mb-10 text-left bg-white/[0.02]">
           <div className="font-mono text-[10px] tracking-widest text-gray-600 mb-3 uppercase">💡 Secrets révélés</div>
           <ul className="space-y-1.5">
             {END_TIPS.map((tip, i) => (
@@ -671,16 +679,29 @@ function EndScreen({ score, onReplay }) {
           </ul>
         </div>
 
-        <button
-          onClick={onReplay}
-          className="group relative font-orbitron font-bold text-base tracking-widest uppercase px-14 py-4 border-2 transition-all duration-200 cursor-pointer"
-          style={{ borderColor: perf.color, color: perf.color }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = perf.color; e.currentTarget.style.color = '#05050f'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = perf.color; }}
-        >
-          REJOUER
-          <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 -z-10 border opacity-20 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-200" style={{ borderColor: perf.color }} />
-        </button>
+        <div className="flex flex-col items-center gap-3">
+          <button
+            onClick={onReplay}
+            className="group relative font-orbitron font-bold text-base tracking-widest uppercase px-14 py-4 border-2 transition-all duration-200 cursor-pointer"
+            style={{ borderColor: perf.color, color: perf.color }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = perf.color; e.currentTarget.style.color = '#05050f'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = perf.color; }}
+          >
+            REJOUER
+            <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 -z-10 border opacity-20 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-200" style={{ borderColor: perf.color }} />
+          </button>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="font-mono text-xs tracking-widest uppercase px-8 py-2 border transition-all duration-200 cursor-pointer"
+              style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#666' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+            >
+              ← ARCADE
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -688,7 +709,7 @@ function EndScreen({ score, onReplay }) {
 
 // ─── ROOT COMPONENT ───────────────────────────────────────────────────────────
 
-export default function ControlGlitch({ onWin }) {
+export default function ControlGlitch({ onWin, onBack }) {
   const [gameState, setGameState] = useState('home'); // 'home' | 'playing' | 'ended'
   const [finalScore, setFinalScore] = useState(0);
 
@@ -711,7 +732,7 @@ export default function ControlGlitch({ onWin }) {
     return (
       <>
         <style>{glitchStyles}</style>
-        <EndScreen score={finalScore} onReplay={() => setGameState('home')} />
+        <EndScreen score={finalScore} onReplay={() => setGameState('home')} onBack={onBack} />
       </>
     );
   }
@@ -727,11 +748,11 @@ export default function ControlGlitch({ onWin }) {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full pointer-events-none blur-[40px]" style={{ background: 'radial-gradient(circle, rgba(255,0,64,0.04) 0%, transparent 70%)' }} />
 
         <div className="relative z-10 text-center px-6 w-full max-w-2xl">
-          <div className="font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-6">
+          <div className="cg-enter font-mono text-[10px] tracking-[0.4em] text-gray-600 uppercase mb-6">
             ▶ SYSTEM_OVERRIDE · v2.7.1 · INFILTRATION EN COURS
           </div>
 
-          <div className="mb-10">
+          <div className="cg-enter-d1 mb-10">
             <h1 className="font-orbitron text-7xl md:text-9xl font-black text-white leading-none glitch-title select-none" data-text="CONTROL">
               CONTROL
             </h1>
@@ -740,12 +761,12 @@ export default function ControlGlitch({ onWin }) {
             </h1>
           </div>
 
-          <p className="font-mono text-sm text-gray-400 leading-relaxed mb-10 max-w-md mx-auto">
+          <p className="cg-enter-d2 font-mono text-sm text-gray-400 leading-relaxed mb-10 max-w-md mx-auto">
             60 secondes. 5 phases. Les règles changent à chaque fois.{' '}
             <span style={{ color: '#ff0040' }}>Ne faites confiance à aucune instruction.</span>
           </p>
 
-          <div className="grid grid-cols-5 gap-2 mb-10">
+          <div className="cg-enter-d3 grid grid-cols-5 gap-2 mb-10">
             {[
               { num: '01', name: 'NORMAL', color: '#39ff14', icon: '◉' },
               { num: '02', name: 'MENSONGE', color: '#00cfff', icon: '⚠' },
@@ -779,6 +800,17 @@ export default function ControlGlitch({ onWin }) {
             <span className="text-gray-700">·</span>
             <span>✗ Erreur <span style={{ color: '#ff0040' }} className="font-bold">-5 pts</span></span>
           </div>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="mt-6 font-mono text-xs tracking-widest uppercase px-8 py-2 border transition-all duration-200 cursor-pointer"
+              style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#666' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+            >
+              ← ARCADE
+            </button>
+          )}
         </div>
       </div>
     </>

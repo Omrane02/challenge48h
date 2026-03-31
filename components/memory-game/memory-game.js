@@ -77,6 +77,12 @@ const styles = `
   }
   .animate-spin-360 { animation: spin360 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
+  @keyframes mg-fadeUp { from { opacity:0; transform:translateY(22px);} to { opacity:1; transform:translateY(0);} }
+  .mg-enter    { animation: mg-fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+  .mg-enter-d1 { animation: mg-fadeUp 0.5s 0.08s cubic-bezier(0.22,1,0.36,1) both; }
+  .mg-enter-d2 { animation: mg-fadeUp 0.5s 0.16s cubic-bezier(0.22,1,0.36,1) both; }
+  .mg-enter-d3 { animation: mg-fadeUp 0.5s 0.24s cubic-bezier(0.22,1,0.36,1) both; }
+
   .bg-secret-pattern {
     background-image: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.02) 6px, rgba(255,255,255,0.02) 12px);
   }
@@ -107,6 +113,7 @@ export default function MemoryGame({
   const [isLocked, setIsLocked] = useState(false);
   const [secretFound, setSecretFound] = useState(false);
   const [time, setTime] = useState(0);
+  const [showIntro, setShowIntro] = useState(true);
   const [gameStatus, setGameStatus] = useState('playing'); // 'playing', 'won', 'failed', 'secret'
   
   const [codeInput, setCodeInput] = useState('');
@@ -150,9 +157,8 @@ export default function MemoryGame({
   }, [totalPairs, secretEmoji]);
 
   useEffect(() => {
-    startNewGame();
     return () => clearInterval(timerRef.current);
-  }, [startNewGame]);
+  }, []);
 
   useEffect(() => {
     if (gameStatus === 'secret' && onWin) onWin();
@@ -260,6 +266,90 @@ export default function MemoryGame({
     }
   };
 
+  if (showIntro) {
+    return (
+      <>
+        <style>{styles}</style>
+        <div className="flex flex-col items-center font-dm-mono text-white py-10 px-4 min-h-screen box-border relative justify-center" style={{ background: '#05050f' }}>
+
+          {/* Title */}
+          <div className="mg-enter text-center mb-8">
+            <p className="text-[0.65rem] tracking-[4px] uppercase mb-2" style={{ color: '#444' }}>✦ Jeu de concentration ✦</p>
+            <h1 className="font-dm-serif leading-none text-white m-0" style={{ fontSize: 'clamp(2.8rem,7vw,5rem)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(191,0,255,0.3)' }}>
+              MÉ<span style={{ color: '#bf00ff' }}>MOIRE</span>
+            </h1>
+            <p className="text-[0.7rem] tracking-[3px] mt-2 uppercase" style={{ color: '#444' }}>Un secret se cache ici</p>
+          </div>
+
+          <hr className="mg-enter-d1 w-[60px] border-none border-t mb-8" style={{ borderColor: 'rgba(191,0,255,0.3)' }} />
+
+          {/* Instructions */}
+          <div className="mg-enter-d1 w-full max-w-sm rounded-xl p-5 flex flex-col gap-3 mb-4" style={{ background: 'rgba(191,0,255,0.04)', border: '1px solid rgba(191,0,255,0.15)' }}>
+            <p className="text-[0.6rem] tracking-[3px] uppercase" style={{ color: '#555' }}>Objectif</p>
+            <p className="text-[0.75rem] leading-relaxed" style={{ color: '#999' }}>
+              Retourne les cartes et trouve les paires. Une paire mystère <span style={{ color: '#bf00ff' }}>{secretEmoji}</span> est cachée dans la grille — trouve-la pour révéler la <span style={{ color: '#bf00ff' }}>lettre secrète</span> et valide-la pour gagner.
+            </p>
+            <div className="flex gap-3 pt-1 border-t border-white/5 mt-1 flex-wrap">
+              {[
+                { icon: '✦', label: `${totalPairs} paires à trouver` },
+                { icon: '⚡', label: `Max ${maxMoves} essais` },
+                { icon: '🦊', label: 'Paire mystère = lettre secrète' },
+              ].map(({ icon, label }, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <span style={{ color: '#bf00ff', fontSize: '0.75rem' }}>{icon}</span>
+                  <span className="text-[0.65rem]" style={{ color: '#555' }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="mg-enter-d2 w-full max-w-sm rounded-xl p-5 flex flex-col gap-3 mb-8" style={{ background: 'rgba(12,12,28,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-[0.6rem] tracking-[3px] uppercase" style={{ color: '#555' }}>Comment jouer</p>
+            <div className="flex flex-col gap-2">
+              {[
+                { step: '1', desc: 'Clique sur une carte pour la retourner' },
+                { step: '2', desc: 'Retourne une 2ème carte — si identique, elles restent visibles' },
+                { step: '3', desc: 'Quand la paire 🦊 est trouvée, entre la lettre affichée' },
+                { step: '4', desc: 'Valide pour débloquer le jeu suivant' },
+              ].map(({ step, desc }) => (
+                <div key={step} className="flex items-start gap-3">
+                  <span className="text-[0.65rem] font-bold shrink-0 mt-0.5" style={{ color: '#bf00ff' }}>{step}.</span>
+                  <span className="text-[0.72rem] leading-relaxed" style={{ color: '#666' }}>{desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="mg-enter-d3 flex flex-col items-center gap-3 w-full max-w-sm">
+            <button
+              className="w-full py-4 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-[0.98] font-dm-mono text-[0.95rem] font-bold rounded-lg"
+              style={{ color: '#bf00ff', background: 'transparent', border: '1px solid #bf00ff' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#bf00ff'; e.currentTarget.style.color = '#000'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#bf00ff'; }}
+              onClick={() => { setShowIntro(false); startNewGame(); }}
+            >
+              ▶ COMMENCER
+            </button>
+            {onBack && (
+              <button
+                className="w-full py-2.5 cursor-pointer tracking-[0.15em] uppercase transition-all active:scale-[0.98] font-dm-mono text-[0.8rem] font-bold rounded-lg"
+                style={{ color: '#555', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                onClick={onBack}
+              >
+                ← ARCADE
+              </button>
+            )}
+          </div>
+
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <style>{styles}</style>
@@ -304,17 +394,41 @@ export default function MemoryGame({
         </div>
 
         {/* Secret Zone */}
-        <div className={`text-white rounded-[10px] py-3.5 px-8 mb-7 text-center relative overflow-hidden min-w-[260px] transition-all duration-200`} style={{ background: 'rgba(12,12,28,0.9)', border: secretFound ? '1px solid #bf00ff' : '1px solid rgba(191,0,255,0.15)', boxShadow: secretFound ? '0 0 20px rgba(191,0,255,0.2)' : 'none' }}>
+        <div className="text-white rounded-[10px] py-3.5 px-8 mb-7 text-center relative overflow-hidden min-w-65 transition-all duration-200" style={{ background: 'rgba(12,12,28,0.9)', border: secretFound ? '1px solid #bf00ff' : '1px solid rgba(191,0,255,0.15)', boxShadow: secretFound ? '0 0 20px rgba(191,0,255,0.2)' : 'none' }}>
           <div className="absolute inset-0 bg-secret-pattern pointer-events-none"></div>
           <div className="relative z-10 text-[0.6rem] tracking-[4px] uppercase text-white/40 mb-2">▲ Code Secret ▲</div>
-          <span className={`font-dm-serif text-5xl min-w-[50px] inline-block text-center relative z-10 
-            ${secretFound ? 'text-white animate-reveal' : 'text-white/15'}`}
-          >
+          <span className={`font-dm-serif text-5xl min-w-[50px] inline-block text-center relative z-10 ${secretFound ? 'text-white animate-reveal' : 'text-white/15'}`}>
             {secretFound ? normalizedSecretLetter : '?'}
           </span>
           <div className="relative z-10 text-[0.6rem] tracking-[2px] text-white/30 mt-1">
-            {secretFound ? '✦ Notez bien cette lettre ! ✦' : 'Trouvez la paire mystère…'}
+            {secretFound ? '✦ Entre la lettre pour valider ✦' : 'Trouvez la paire mystère…'}
           </div>
+
+          {/* Saisie du code dès que la lettre est trouvée */}
+          {secretFound && gameStatus === 'playing' && (
+            <div className="relative z-10 flex flex-col items-center gap-2 mt-4">
+              <input
+                className="font-dm-serif text-[2rem] w-16 text-center bg-transparent text-white border-none outline-none tracking-[4px] uppercase"
+                style={{ borderBottom: `2px solid ${codeFeedback.status === 'wrong' ? '#ff4040' : '#bf00ff'}` }}
+                maxLength={1}
+                placeholder="?"
+                autoComplete="off"
+                spellCheck="false"
+                value={codeInput}
+                onChange={e => setCodeInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && checkCode()}
+              />
+              <div className={`text-[0.7rem] tracking-[2px] min-h-4 transition-colors duration-200 ${codeFeedback.status === 'wrong' ? 'text-[#ff4040]' : codeFeedback.status === 'right' ? 'text-[#bf00ff]' : 'text-[#555]'}`}>
+                {codeFeedback.text}
+              </div>
+              <button
+                className="font-dm-mono text-[0.7rem] tracking-[2px] uppercase rounded-lg py-1.5 px-5 cursor-pointer transition-all duration-150 border border-[#bf00ff] bg-transparent text-[#bf00ff] hover:bg-[#bf00ff] hover:text-black active:scale-95"
+                onClick={checkCode}
+              >
+                Valider →
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Grid */}
