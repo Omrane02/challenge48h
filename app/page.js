@@ -469,7 +469,135 @@ function GameCard({ game, index, isUnlocked, isNextToUnlock, previousGame, onCli
 /* ─── Secret Code Section ─── */
 const FINAL_CODE = 'BUZUKI';
 
-function SecretCodeSection() {
+function SecretEndingScreen({ onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-9999 flex flex-col items-center justify-center gap-10 px-6"
+      style={{ background: 'radial-gradient(ellipse at 50% 40%, #0a0010 0%, #000 100%)', fontFamily: "'Share Tech Mono', monospace" }}
+    >
+      <style>{`
+        @keyframes se-glitch {
+          0%,100% { clip-path: inset(0 0 98% 0); transform: translateX(0); }
+          10% { clip-path: inset(30% 0 50% 0); transform: translateX(-4px); }
+          20% { clip-path: inset(70% 0 10% 0); transform: translateX(4px); }
+          30% { clip-path: inset(10% 0 80% 0); transform: translateX(-2px); }
+          40% { clip-path: inset(50% 0 30% 0); transform: translateX(3px); }
+          50% { clip-path: inset(90% 0 2% 0); transform: translateX(0); }
+        }
+        @keyframes se-fade { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes se-pulse { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
+        @keyframes se-bar { from { width:0%; } to { width:100%; } }
+      `}</style>
+
+      {/* Glitch title */}
+      <div className="relative text-center select-none" style={{ animation: 'se-fade 0.6s ease both' }}>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(3rem,8vw,6rem)', color: '#bf00ff', letterSpacing: '0.06em', textShadow: '0 0 40px rgba(191,0,255,0.6), 0 0 80px rgba(191,0,255,0.2)', lineHeight: 1 }}>
+          HUMANITÉ CORROMPUE
+        </h1>
+        <div aria-hidden className="absolute inset-0" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(3rem,8vw,6rem)', color: '#ff0040', letterSpacing: '0.06em', lineHeight: 1, animation: 'se-glitch 3s infinite', pointerEvents: 'none' }}>
+          HUMANITÉ CORROMPUE
+        </div>
+      </div>
+
+      {/* Message */}
+      <div className="flex flex-col items-center gap-4 max-w-lg text-center" style={{ animation: 'se-fade 0.6s ease 0.2s both', opacity: 0 }}>
+        <p style={{ fontSize: '0.95rem', color: '#ccc', lineHeight: 1.8, letterSpacing: '0.05em' }}>
+          Tu as découvert le code secret.<br />
+          Mais cela ne suffit pas.
+        </p>
+        <p style={{ fontSize: '0.85rem', color: '#888', lineHeight: 1.8 }}>
+          Ton humanité s'est fragmentée en données corrompues.<br />
+          Pour la récupérer, tu dois encore traverser les épreuves —<br />
+          chaque jeu complété restaure un fragment de toi-même.
+        </p>
+      </div>
+
+      {/* Progress bar — symbolic */}
+      <div className="flex flex-col items-center gap-2 w-full max-w-sm" style={{ animation: 'se-fade 0.6s ease 0.35s both', opacity: 0 }}>
+        <div className="flex justify-between w-full">
+          <span style={{ fontSize: '9px', color: '#555', letterSpacing: '0.3em', textTransform: 'uppercase' }}>Humanité restante</span>
+          <span style={{ fontSize: '9px', color: '#bf00ff', letterSpacing: '0.2em' }}>EN COURS...</span>
+        </div>
+        <div className="w-full rounded-full" style={{ height: '3px', background: 'rgba(191,0,255,0.1)' }}>
+          <div style={{ height: '100%', width: '0%', background: 'linear-gradient(90deg,#bf00ff,#ff0040)', borderRadius: '9999px', boxShadow: '0 0 10px #bf00ff', animation: 'se-bar 2s cubic-bezier(0.22,1,0.36,1) 0.5s both' }} />
+        </div>
+      </div>
+
+      {/* Warning badges */}
+      <div className="flex flex-wrap justify-center gap-3" style={{ animation: 'se-fade 0.6s ease 0.45s both', opacity: 0 }}>
+        {GAMES.map((g) => (
+          <span key={g.id} className="px-3 py-1 rounded font-mono text-xs tracking-widest uppercase"
+            style={{ background: `${g.accent}10`, border: `1px solid ${g.accent}40`, color: g.accent, animation: 'se-pulse 2s infinite' }}>
+            {g.tag}
+          </span>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <button
+        onClick={onClose}
+        className="font-mono text-sm tracking-[0.2em] uppercase px-10 py-4 rounded-xl cursor-pointer transition-all"
+        style={{ color: '#fff', background: 'transparent', border: '1px solid rgba(191,0,255,0.5)', boxShadow: '0 0 20px rgba(191,0,255,0.15)', animation: 'se-fade 0.6s ease 0.6s both', opacity: 0 }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(191,0,255,0.15)'; e.currentTarget.style.boxShadow = '0 0 40px rgba(191,0,255,0.35)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = '0 0 20px rgba(191,0,255,0.15)'; }}
+      >
+        ↩ REPRENDRE LES ÉPREUVES
+      </button>
+    </div>
+  );
+}
+
+function SecretVideoOverlay({ onClose, onEnded }) {
+  const iframeRef = useRef(null);
+
+  useEffect(() => {
+    function createPlayer() {
+      new window.YT.Player(iframeRef.current, {
+        events: {
+          onStateChange: (e) => {
+            if (e.data === window.YT.PlayerState.ENDED) onEnded();
+          },
+        },
+      });
+    }
+
+    if (window.YT && window.YT.Player) {
+      createPlayer();
+    } else {
+      if (!document.getElementById('yt-api-script')) {
+        const script = document.createElement('script');
+        script.id = 'yt-api-script';
+        script.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(script);
+      }
+      window.onYouTubeIframeAPIReady = createPlayer;
+    }
+  }, [onEnded]);
+
+  return (
+    <div className="fixed inset-0 z-9999" style={{ background: '#000' }}>
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 font-mono text-xs tracking-widest uppercase px-4 py-2 rounded cursor-pointer"
+        style={{ color: '#39ff14', border: '1px solid rgba(57,255,20,0.4)', background: 'rgba(0,0,0,0.7)', zIndex: 1 }}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(57,255,20,0.15)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.7)'}
+      >
+        ✕ FERMER
+      </button>
+      <iframe
+        ref={iframeRef}
+        src="https://www.youtube.com/embed/VQ-uIPFTnVU?autoplay=1&controls=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&vq=hd1080"
+        title="Secret"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+        allowFullScreen
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+      />
+    </div>
+  );
+}
+
+function SecretCodeSection({ onVideoOpen, onVideoEnded }) {
   const [open, setOpen] = useState(false);
   const [letters, setLetters] = useState(Array(GAMES.length).fill(''));
   const [result, setResult] = useState(null); // null | 'correct' | 'wrong'
@@ -485,7 +613,9 @@ function SecretCodeSection() {
   }
 
   function validate() {
-    setResult(assembled.toUpperCase() === FINAL_CODE.toUpperCase() ? 'correct' : 'wrong');
+    const correct = assembled.toUpperCase() === FINAL_CODE.toUpperCase();
+    setResult(correct ? 'correct' : 'wrong');
+    if (correct) onVideoOpen(true);
   }
 
   return (
@@ -584,12 +714,18 @@ function SecretCodeSection() {
 
           {/* Result feedback */}
           {result === 'correct' && (
-            <div
-              className="flex items-center justify-center gap-3 py-3 rounded-lg font-mono text-sm tracking-widest uppercase"
-              style={{ background: 'rgba(57,255,20,0.06)', border: '1px solid rgba(57,255,20,0.3)', color: '#39ff14' }}
-            >
-              ✓ CODE CORRECT — ACCÈS AUTORISÉ
-            </div>
+            <>
+              <div
+                className="flex items-center justify-center gap-3 py-3 rounded-lg font-mono text-sm tracking-widest uppercase"
+                style={{ background: 'rgba(57,255,20,0.06)', border: '1px solid rgba(57,255,20,0.3)', color: '#39ff14' }}
+              >
+                ✓ CODE CORRECT — ACCÈS AUTORISÉ
+              </div>
+              <SecretVideoOverlay
+                onClose={() => { setResult(null); onVideoOpen(false); }}
+                onEnded={() => { setResult(null); onVideoOpen(false); onVideoEnded(); }}
+              />
+            </>
           )}
           {result === 'wrong' && (
             <div
@@ -902,6 +1038,8 @@ function App() {
   const [devFlash, setDevFlash] = useState(false);
   const [unlockedLevel, setUnlockedLevel] = useState(1);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [secretVideoOpen, setSecretVideoOpen] = useState(false);
+  const [showSecretEnding, setShowSecretEnding] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
   const [timerRunning, setTimerRunning] = useState(false);
   const [musicPlaying, setMusicPlaying] = useState(false);
@@ -1087,9 +1225,10 @@ function App() {
           </div>
         </div>
       )}
-      <MailboxPanel unlockedLevel={unlockedLevel} />
-      <TimerWidget timeLeft={timeLeft} running={timerRunning} onToggle={handleTimerToggle} onReset={handleTimerReset} />
-      <MusicControl audioRef={audioRef} playing={musicPlaying} onToggle={handleMusicToggle} volume={musicVolume} onVolume={handleMusicVolume} />
+      {showSecretEnding && <SecretEndingScreen onClose={() => setShowSecretEnding(false)} />}
+      {!secretVideoOpen && <MailboxPanel unlockedLevel={unlockedLevel} />}
+      {!secretVideoOpen && <TimerWidget timeLeft={timeLeft} running={timerRunning} onToggle={handleTimerToggle} onReset={handleTimerReset} />}
+      {!secretVideoOpen && <MusicControl audioRef={audioRef} playing={musicPlaying} onToggle={handleMusicToggle} volume={musicVolume} onVolume={handleMusicVolume} />}
       {/* Global styles injected inline */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap');
@@ -1275,8 +1414,11 @@ function App() {
             </p>
           </div>
 
+          {/* ── Secret Code ── */}
+          <SecretCodeSection onVideoOpen={setSecretVideoOpen} onVideoEnded={() => setShowSecretEnding(true)} />
+
           {/* ── Game cards grid ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full mt-12">
             {GAMES.map((game, index) => {
               const isUnlocked = index < unlockedLevel;
               const isNextToUnlock = index === unlockedLevel;
@@ -1295,9 +1437,6 @@ function App() {
               );
             })}
           </div>
-
-          {/* ── Secret Code ── */}
-          <SecretCodeSection />
 
           {/* ── Reset ── */}
           <div className="mt-20 flex items-center gap-4">
