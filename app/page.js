@@ -1197,7 +1197,7 @@ function App() {
             className="text-xs tracking-[0.25em] uppercase text-gray-600 mb-14 text-center"
             style={{ animation: 'scanFade 0.6s ease both 0.4s', opacity: 0 }}
           >
-            5 mini-jeux · 5 défis · 1 séquence
+            6 mini-jeux · 6 défis · 1 séquence
           </p>
 
           {/* ── Progress section ── */}
