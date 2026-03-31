@@ -236,6 +236,13 @@ export default function RhythmGame({ onWin, onBack }) {
   const [grace,      setGrace]      = useState(false);
   const [, forceRender]             = useState(0);
 
+  useEffect(() => {
+    if (gameState === 'gameover') {
+      const audio = new Audio('/game over.mp3');
+      audio.play().catch(() => {});
+    }
+  }, [gameState]);
+
   const arrowsRef        = useRef([]);
   const nextNoteIdxRef   = useRef(0);
   const missesRef        = useRef(0);

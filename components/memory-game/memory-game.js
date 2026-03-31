@@ -88,6 +88,11 @@ const styles = `
   }
 `;
 
+function playSound(src) {
+  const audio = new Audio(src);
+  audio.play().catch(() => {});
+}
+
 function shuffle(array) {
   let currentIndex = array.length, randomIndex;
   while (currentIndex !== 0) {
@@ -164,10 +169,15 @@ export default function MemoryGame({
     if (gameStatus === 'secret' && onWin) onWin();
   }, [gameStatus, onWin]);
 
+  useEffect(() => {
+    if (gameStatus === 'failed') playSound('/game over.mp3');
+  }, [gameStatus]);
+
   // Handle Card Flip
   const handleCardClick = (index) => {
     if (isLocked || gameStatus !== 'playing') return;
     if (cards[index].isFlipped || cards[index].isMatched) return;
+    playSound('/select card.mp3');
 
     // Start timer on first interaction
     if (!startTimeRef.current) {
@@ -199,6 +209,7 @@ export default function MemoryGame({
       
       // Match found
       if (newCards[firstIndex].emoji === newCards[secondIndex].emoji) {
+        playSound('/card success.mp3');
         setTimeout(() => {
           setCards(prev => {
             const matchedCards = [...prev];
@@ -230,6 +241,7 @@ export default function MemoryGame({
         }, 400);
       } else {
         // No match
+        playSound('/card missmatch.mp3');
         setTimeout(() => {
           setCards(prev => {
             const unflippedCards = [...prev];

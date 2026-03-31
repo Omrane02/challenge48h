@@ -81,6 +81,13 @@ export default function TuneSwitch({ onWin, onBack }) {
   const redScheduleRef    = useRef(null);
   const switchScheduleRef = useRef(null);
 
+  useEffect(() => {
+    if (screen === 'lose') {
+      const audio = new Audio('/game over.mp3');
+      audio.play().catch(() => {});
+    }
+  }, [screen]);
+
   // ── Keep refs in sync with state ─────────────────────────────────────────
   useEffect(() => { screenRef.current     = screen;     }, [screen]);
   useEffect(() => { stringsRef.current    = strings;    }, [strings]);

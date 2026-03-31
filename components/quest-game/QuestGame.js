@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 // ---------------------------------------------------------------------------
 // Level definitions — 'S' = player start, 'T' = target, '#' = wall, '.' = empty
@@ -320,6 +320,8 @@ export default function QuestGame({ onBack, onWin }) {
   const [steps,      setSteps]      = useState(0)
 
   const level = LEVELS[levelIdx]
+  const posRef = useRef(pos)
+  useEffect(() => { posRef.current = pos }, [pos])
 
   // ---- reset to beginning of current level ----
   const resetLevel = useCallback((idx = levelIdx) => {
@@ -374,6 +376,19 @@ export default function QuestGame({ onBack, onWin }) {
 
       const { dr, dc, dir: newDir } = dirMap[e.key]
       setDir(newDir)
+
+      const cur = posRef.current
+      const newRow = cur.row + dr
+      const newCol = cur.col + dc
+      const canMove = newRow >= 0 && newRow < level.rows && newCol >= 0 && newCol < level.cols && !level.walls.has(`${newRow}-${newCol}`)
+      if (canMove) {
+        if (newRow === level.target.row && newCol === level.target.col) {
+          new Audio('/card success.mp3').play().catch(() => {})
+        } else {
+          new Audio('/select card.mp3').play().catch(() => {})
+        }
+      }
+
       setPos(prev => {
         const row = prev.row + dr
         const col = prev.col + dc

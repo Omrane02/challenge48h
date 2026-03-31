@@ -6,7 +6,7 @@ const ARROWS = ['up', 'down', 'left', 'right'];
 const GLYPH  = { up: '↑', down: '↓', left: '←', right: '→' };
 const COLOR  = { up: '#e0e0e0', down: '#39ff14', left: '#2db80d', right: '#888888' };
 const MAX_ROUNDS = 12;
-const MIN_ROUND_FOR_FRAGMENT = 1;
+const MIN_ROUND_FOR_FRAGMENT = 6;
 const PASSWORD_FRAGMENT = 'K';
 
 function getDelay(round) {
@@ -128,6 +128,7 @@ export default function MirrorSequence({ onWin, onBack }) {
     const seq = seqRef.current;
     const idx = inputIdxRef.current;
     if (idx >= seq.length) return;
+    new Audio('/select card.mp3').play().catch(() => {});
 
     const correct = seq[idx];
     const g = GLYPH[dir];
@@ -154,6 +155,7 @@ export default function MirrorSequence({ onWin, onBack }) {
   }, []);
 
   const triggerPass = useCallback(() => {
+    new Audio('/card success.mp3').play().catch(() => {});
     const r = roundRef.current;
     const seq = seqRef.current;
     const b = bestRef.current;
@@ -197,6 +199,7 @@ export default function MirrorSequence({ onWin, onBack }) {
   }, []);
 
   const triggerFail = useCallback(() => {
+    new Audio('/game over.mp3').play().catch(() => {});
     const r = roundRef.current;
     const seq = seqRef.current;
     const hint = r < MIN_ROUND_FOR_FRAGMENT

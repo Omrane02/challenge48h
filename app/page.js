@@ -688,7 +688,7 @@ function TimerWidget({ timeLeft, running, onToggle, onReset, compact = false }) 
 
   return (
     <div
-      className="fixed top-5 right-5 z-50 flex flex-col items-center gap-1.5"
+      className="fixed top-5 left-5 z-50 flex flex-col items-center gap-1.5"
       style={{ fontFamily: "'Share Tech Mono', monospace" }}
     >
       <div
@@ -828,7 +828,17 @@ function App() {
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.4);
   const audioRef = useRef(null);
+  const gameAudioRef = useRef(null);
+  const bgWasPlayingRef = useRef(false);
   const timerRef = useRef(null);
+
+  const GAME_MUSIC = {
+    rhythm: '/rythme_game.mp3',
+    glitch: '/glitch.mp3',
+    memory: '/memory_game.mp3',
+    quest: '/arrow_quest.mp3',
+    mirror: '/mirror.mp3',
+  };
 
   useEffect(() => {
     const audio = new Audio('/fond.mp3');
@@ -840,6 +850,40 @@ function App() {
     return () => { audio.pause(); audio.src = ''; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!currentGame) return; // lancement initial : la musique de fond gère elle-même son play()
+
+    // Stop any previous game music
+    if (gameAudioRef.current) {
+      gameAudioRef.current.pause();
+      gameAudioRef.current.src = '';
+      gameAudioRef.current = null;
+    }
+
+    const bgAudio = audioRef.current;
+    if (GAME_MUSIC[currentGame]) {
+      // Mémoriser si la musique de fond tournait avant d'ouvrir le jeu
+      bgWasPlayingRef.current = bgAudio ? !bgAudio.paused : false;
+      if (bgAudio) bgAudio.pause();
+      const gameAudio = new Audio(GAME_MUSIC[currentGame]);
+      gameAudio.loop = true;
+      gameAudio.volume = musicVolume;
+      gameAudio.play().catch(() => {});
+      gameAudioRef.current = gameAudio;
+    }
+
+    return () => {
+      // Quand on quitte le jeu : arrêter la musique du jeu et relancer le fond si nécessaire
+      if (gameAudioRef.current) {
+        gameAudioRef.current.pause();
+        gameAudioRef.current.src = '';
+        gameAudioRef.current = null;
+      }
+      if (bgAudio && bgWasPlayingRef.current) bgAudio.play().catch(() => {});
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentGame]);
 
   const handleMusicToggle = () => {
     const audio = audioRef.current;
@@ -856,6 +900,7 @@ function App() {
   const handleMusicVolume = (v) => {
     setMusicVolume(v);
     if (audioRef.current) audioRef.current.volume = v;
+    if (gameAudioRef.current) gameAudioRef.current.volume = v;
   };
 
   useEffect(() => {
@@ -911,7 +956,7 @@ function App() {
     return (
       <div className="min-h-screen bg-[#05050f] text-white relative">
         {/* Floating timer — top right */}
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 left-4 z-50">
           <TimerWidget timeLeft={timeLeft} running={timerRunning} onToggle={handleTimerToggle} onReset={handleTimerReset} compact />
         </div>
         <MusicControl audioRef={audioRef} playing={musicPlaying} onToggle={handleMusicToggle} volume={musicVolume} onVolume={handleMusicVolume} />
